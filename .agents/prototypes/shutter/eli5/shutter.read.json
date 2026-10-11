@@ -1,9 +1,10 @@
 {
   "figure": "shutter.js",
   "parts": [
-    { "name": "body", "shows": ["a rounded slab", "a top plate with a wind lever and a shutter button"], "verdict": "yes", "note": "read from assets/look.png, rest and small" },
-    { "name": "lens", "shows": ["concentric rings", "a glass at the centre"], "verdict": "yes", "note": "" },
-    { "name": "curtain", "shows": ["horizontal slats", "an opaque edge at the slit"], "verdict": "yes", "note": "the winding drum is out of view through the lens; a drum across the gate would need a turned part on a horizontal axis" },
+    { "name": "body", "shows": ["a rounded slab", "a top plate with a wind lever, a knurled knob and a shutter button"], "verdict": "yes", "note": "read from assets/look.png" },
+    { "name": "lens", "shows": ["a mount ring", "a bore the shutter sits inside"], "verdict": "yes", "note": "" },
+    { "name": "curtain", "shows": ["horizontal slats", "rollers top and bottom"], "verdict": "yes", "note": "the rollers are the two short drums inside the bore" },
+    { "name": "film", "shows": ["sprocket holes", "the frame behind the slit"], "verdict": "yes", "note": "" },
     { "name": "slit", "shows": ["the light between the two curtains"], "verdict": "yes", "note": "" }
   ]
 }

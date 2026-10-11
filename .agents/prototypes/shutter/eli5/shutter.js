@@ -24,22 +24,22 @@ function mount({ stage, svg, read }, value) {
   const ringOnFace = (cx, cz, r, y, n = 48) => EL.poly([...Array(n)].map((_, i) => { const t = (i / n) * 2 * Math.PI; return P(cx + Math.cos(t) * r, y, cz + Math.sin(t) * r); }));
 
   // the body, and the top plate with the wind lever and the shutter button
-  EL.draw(EL.solid(g), EL.slab(-BW, -20, BW, BY, 5, 0, BH, P, front, { inset: 2.2 }), { name: "body", at: [0, -2, BH / 2] });
+  EL.draw(EL.solid(g), EL.slab(-BW, -20, BW, BY, 5, 0, BH, P, front, { inset: 2.2 }), { name: "body", recede: true, at: [0, -2, BH / 2] });
   EL.line(g, EL.sideSeam(-BW, -20, BW, BY, 5, BH - 6, P, front, 5), "el-lo");
   EL.line(g, EL.sideSeam(-BW, -20, BW, BY, 5, 4, P, front, 5), "el-lo");
-  EL.draw(EL.solid(g), EL.slab(-BW + 2, -18, BW - 2, BY - 2, 4, BH, BH + 4, P, front, { inset: 1.4 }), { name: "top", at: [0, -2, BH + 2] });
-  EL.draw(EL.solid(g), EL.slab(-9, -17, 9, 1, 2, BH + 4, BH + 13, P, front, { inset: 1 }), { name: "prism", at: [0, -8, BH + 8] });
-  EL.draw(EL.solid(g), EL.cylinder(23, 4, 3.2, BH + 4, BH + 8, P, front, 24), { name: "release", at: [23, 4, BH + 6] });
+  EL.draw(EL.solid(g), EL.slab(-BW + 2, -18, BW - 2, BY - 2, 4, BH, BH + 4, P, front, { inset: 1.4 }), { name: "top", recede: true, at: [0, -2, BH + 2] });
+  EL.draw(EL.solid(g), EL.slab(-9, -17, 9, 1, 2, BH + 4, BH + 13, P, front, { inset: 1 }), { name: "prism", recede: true, at: [0, -8, BH + 8] });
+  EL.draw(EL.solid(g), EL.cylinder(23, 4, 3.2, BH + 4, BH + 8, P, front, 24), { name: "release", recede: true, at: [23, 4, BH + 6] });
   EL.line(g, EL.knurl(23, 4, 3.2, BH + 4, BH + 8, 14, P, front), "el-lo");
-  EL.draw(EL.solid(g), EL.cylinder(-26, 2, 4.6, BH + 4, BH + 10, P, front, 28), { name: "rewind", at: [-26, 2, BH + 7] });
+  EL.draw(EL.solid(g), EL.cylinder(-26, 2, 4.6, BH + 4, BH + 10, P, front, 28), { name: "rewind", recede: true, at: [-26, 2, BH + 7] });
   const knobK = EL.line(g, "", "el-lo"), knobI = EL.line(g, "", "el-lo");   // the knob turns with the shutter
-  EL.draw(EL.solid(g), EL.cylinder(-23, -14, 2, BH + 4, BH + 6, P, front, 16), { name: "lever.pivot", at: [-23, -14, BH + 5] });
-  EL.draw(EL.solid(g), EL.slab(-33, -16, -19, -12, 1, BH + 6, BH + 7, P, front, { inset: 0.4 }), { name: "lever", at: [-26, -14, BH + 6.5] });
+  EL.draw(EL.solid(g), EL.cylinder(-23, -14, 2, BH + 4, BH + 6, P, front, 16), { name: "lever.pivot", recede: true, at: [-23, -14, BH + 5] });
+  EL.draw(EL.solid(g), EL.slab(-33, -16, -19, -12, 1, BH + 6, BH + 7, P, front, { inset: 0.4 }), { name: "lever", recede: true, at: [-26, -14, BH + 6.5] });
 
-  // the lens: concentric rings on the front face, the shutter inside the glass
-  EL.line(g, ringOnFace(LX, LZ, 19, BY + 0.04), "el-sil");
-  EL.line(g, ringOnFace(LX, LZ, 15.5, BY + 0.05), "el-lo");
+  // the lens: the mount ring the viewer looks through, the film behind, the shutter inside
   EL.line(g, ringOnFace(LX, LZ, 11.5, BY + 0.06), "el-lo");
+  EL.draw(EL.solid(g), EL.slab(LX - GAP + 1, BY - 1.2, LX + GAP - 1, BY - 0.8, 0.5, LZ - GAP, LZ + GAP, P, front, { inset: 0 }), { name: "film", at: [LX, BY - 1, LZ] });
+  for (let z = LZ - GAP + 2; z < LZ + GAP - 1; z += 3) for (const x of [LX - GAP + 2, LX + GAP - 2]) { const d = EL.dot(g, C, 0.5, "el-dot m"); EL.place(d, P(x, BY - 0.78, z)); }
 
   let over = null, last = NaN, A, B, slats, slit;
   const paint = (s, record) => {
@@ -64,6 +64,9 @@ function mount({ stage, svg, read }, value) {
 
   A = EL.solid(g); B = EL.solid(g); slats = EL.mk("g", {}, g); slit = EL.line(g, "", "el-hi");
   paint(value * 0.4, true);
+  for (const z of [LZ + GAP - 1, LZ - GAP + 1]) EL.draw(EL.solid(g), EL.latheY([[BY + 0.7, 1.6], [BY + 3.7, 1.6]], LX, z, P, { steps: 18 }), { name: "curtain.drum", at: [LX, BY + 2, z] });
+  // the mount ring, drawn after the curtains so the shutter sits inside its bore
+  EL.draw(EL.solid(g), EL.ringY(13, 17.5, BY + 4, LX, LZ, P, { steps: 48 }), { name: "lens", at: [LX, BY + 4, LZ] });
 
   const sp = EL.spring(value * 0.4, { eps: 0.01 });
   const loop = EL.register(stage, (dt) => { const m = EL.stepS(sp, dt); paint(sp.x, false); return m; });
@@ -86,9 +89,10 @@ figure({
   rest: "rest",
   tour: [[120, 200], [200, 160], [280, 200], [200, 250], null],
   parts: [
-    { name: "body", shows: ["a rounded slab", "a top plate with a wind lever and a shutter button"] },
-    { name: "lens", shows: ["concentric rings", "a glass at the centre"] },
-    { name: "curtain", shows: ["horizontal slats", "an opaque edge at the slit"] },
+    { name: "body", shows: ["a rounded slab", "a top plate with a wind lever, a knurled knob and a shutter button"] },
+    { name: "lens", shows: ["a mount ring", "a bore the shutter sits inside"] },
+    { name: "curtain", shows: ["horizontal slats", "rollers top and bottom"] },
+    { name: "film", shows: ["sprocket holes", "the frame behind the slit"] },
     { name: "slit", shows: ["the light between the two curtains"] },
   ],
   mount,

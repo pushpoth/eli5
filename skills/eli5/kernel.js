@@ -1,4 +1,4 @@
-/* eli5 kernel sha256:6a705513cd5edb28821c73ffcfa7848528e342721f3101836e8c9a581871f0d6 */
+/* eli5 kernel sha256:4d96108b8f1411e47329fcae04c983085eb7f0c4f0df529ca2f01289e02c5f45 */
 /*
  * EL: everything a figure may call. Read this index; the code under it is the
  * engine, and a figure never edits it. A change to the engine is a change to
@@ -24,6 +24,8 @@
  *   slab(x0, y0, x1, y1, r, z0, z1, P, front, opts?)    a rounded box; opts { inset, steps }
  *   cylinder(cx, cy, r, z0, z1, P, front, steps?)       a round post, puck, foot or boss
  *   lathe(prof, P, front, opts?)                        a surface of revolution about z from a meridian [[z, r], …]; convex only
+ *   latheY(prof, cx, cz, P, opts?)                      the same about the y axis: a lens barrel, a drum, a roller
+ *   ringY(rIn, rOut, y, cx, cz, P, opts?)               a flat ring on the plane at y (evenodd): a lens mount with a bore
  *   prism(P, front, ring, inner, z0, z1)                the three path strings of any ring pair, on screen
  * Parts (each returns a path `d` for EL.line, and draws only what faces the camera)
  *   knurl(cx, cy, r, z0, z1, n, P, front)   vertical knurl lines on a knob or thumb screw
@@ -239,6 +241,32 @@ function cylinder(cx, cy, r, z0, z1, P, front, steps = 32) {
 }
 
 /**
+ * A surface of revolution about the y axis (the view axis) from a meridian of
+ * `[y, r]` — a lens barrel, a drum, a roller. Silhouette is the hull of every
+ * ring; the near end ring is the lid, and its inset is the crease.
+ */
+function latheY(prof, cx, cz, P, { steps = 40 } = {}) {
+  const ring = (r, y) => {
+    const pts = [];
+    for (let i = 0; i < steps; i++) { const a = (i / steps) * 2 * Math.PI; pts.push(P(cx + Math.cos(a) * r, y, cz + Math.sin(a) * r)); }
+    return pts;
+  };
+  const sil = poly(hull(prof.flatMap(([y, r]) => ring(r, y))));
+  const [fy, fr] = prof[prof.length - 1];
+  return { paths: { sil, top: poly(ring(fr, fy)), crease: open(ring(Math.max(0.3, fr - 1.2), fy)) }, shape: { kind: "turnY", prof, cx, cz, steps } };
+}
+
+/**
+ * A flat ring on the plane at y: a lens mount, a collar seen face-on, a bezel.
+ * The `d` is two circles with the inner one as a hole (`evenodd`), so what is
+ * drawn behind the bore shows through.
+ */
+function ringY(rIn, rOut, y, cx, cz, P, { steps = 48 } = {}) {
+  const circle = (r) => poly([...Array(steps)].map((_, i) => { const a = (i / steps) * 2 * Math.PI; return P(cx + Math.cos(a) * r, y, cz + Math.sin(a) * r); }));
+  return { paths: { sil: circle(rOut) + circle(rIn), top: "", crease: circle(rIn) }, shape: { kind: "ringY", rIn, rOut, cx, cz, y }, evenodd: true };
+}
+
+/**
  * A surface of revolution about the z axis from a meridian `prof`, a list of
  * `[z, r]` from one end to the other. Convex profiles only for now: the
  * silhouette is the hull of every ring, and the crease is the front run of the
@@ -405,6 +433,8 @@ const recorded = () => shapes.slice();
  */
 function draw(el, part, meta) {
   put(el, part.paths);
+  if (part.evenodd) el.sil.setAttribute("fill-rule", "evenodd");
+  if (meta && meta.recede) el.g.classList.add("el-recede");
   if (recording && part.shape && meta && meta.name) shapes.push({ shape: part.shape, name: meta.name, at: meta.at ?? [0, 0, 0] });
 }
 
@@ -533,9 +563,9 @@ function disposer() {
  * default; `.dark`/`[data-theme="dark"]` and the figure's own `data-theme`
  * override it. The `--eli5-*` properties are the public theme.
  */
-const LIGHT = { plate: "#ffffff", face: "#ededf0", top: "#ffffff", hi: "#1b1b1e", mid: "#7b7b84", lo: "#c8c8ce", edge: "#3a3a40" };
-const DARK = { plate: "#0b0b0d", face: "#17171a", top: "#222227", hi: "#e6e6ea", mid: "#8b8b93", lo: "#33333a", edge: "#9a9aa2" };
-const KEYS = ["plate", "face", "top", "hi", "mid", "lo", "edge"];
+const LIGHT = { plate: "#ffffff", face: "#ededf0", top: "#ffffff", recede: "#f7f7f9", hi: "#1b1b1e", mid: "#7b7b84", lo: "#c8c8ce", edge: "#3a3a40" };
+const DARK = { plate: "#0b0b0d", face: "#17171a", top: "#222227", recede: "#0f0f12", hi: "#e6e6ea", mid: "#8b8b93", lo: "#33333a", edge: "#9a9aa2" };
+const KEYS = ["plate", "face", "top", "recede", "hi", "mid", "lo", "edge"];
 const vars = (p) => KEYS.map((k) => `--el-${k}:var(--eli5-${k},${p[k]});`).join("");
 const S = ":where([data-eli5]>svg)";
 
@@ -547,6 +577,7 @@ function css() {
     `:where([data-eli5][data-eli5-theme="dark"]){${vars(DARK)}}`,
     `${S}{position:absolute;inset:0;width:100%;height:100%;display:block}`,
     `${S} :where(path,polygon,ellipse,line){fill:var(--el-plate);stroke:var(--el-mid);stroke-width:var(--el-sw);vector-effect:non-scaling-stroke;stroke-linejoin:round;stroke-linecap:round}`,
+    `${S} :where(.el-recede){--el-face:var(--el-recede);--el-top:var(--el-recede);--el-edge:var(--el-lo)}`,
     `${S} :where(.el-nf){fill:none}`,
     `${S} :where(.el-sil){fill:var(--el-face);stroke:var(--el-edge)}`,
     `${S} :where(.el-top){fill:var(--el-top);stroke:none}`,
@@ -673,6 +704,11 @@ const aabb = (s) => {
     const ps = s.prof, R = Math.max(...ps.map((p) => p[1]));
     return [-R, -R, Math.min(...ps.map((p) => p[0])), R, R, Math.max(...ps.map((p) => p[0]))];
   }
+  if (s.kind === "ringY") return [s.cx - s.rOut, s.y, s.cz - s.rOut, s.cx + s.rOut, s.y, s.cz + s.rOut];
+  if (s.kind === "turnY") {
+    const ps = s.prof, R = Math.max(...ps.map((p) => p[1])), ys = ps.map((p) => p[0]);
+    return [s.cx - R, Math.min(...ys), s.cz - R, s.cx + R, Math.max(...ys), s.cz + R];
+  }
   return [0, 0, 0, 0, 0, 0];
 };
 const xyOverlap = (a, b, tol) => a[0] < b[3] + tol && b[0] < a[3] + tol && a[1] < b[4] + tol && b[1] < a[4] + tol;
@@ -686,6 +722,10 @@ function samplePoints(s) {
     const R = s.kind === "cyl" ? s.r : Math.max(...s.prof.map((p) => p[1]));
     const cx = s.kind === "cyl" ? s.cx : 0, cy = s.kind === "cyl" ? s.cy : 0;
     for (let k = 0; k < 12; k++) { const a = (k * Math.PI) / 6; for (const z of [z0, z1]) pts.push([cx + Math.cos(a) * R, cy + Math.sin(a) * R, z]); }
+  } else if (s.kind === "turnY") {
+    for (const [y, r] of s.prof) for (let k = 0; k < 12; k++) { const a = (k * Math.PI) / 6; pts.push([s.cx + Math.cos(a) * r, y, s.cz + Math.sin(a) * r]); }
+  } else if (s.kind === "ringY") {
+    for (let k = 0; k < 12; k++) { const a = (k * Math.PI) / 6; pts.push([s.cx + Math.cos(a) * s.rOut, s.y, s.cz + Math.sin(a) * s.rOut]); }
   } else {
     for (const X of [x0, x1]) for (const Y of [y0, y1]) for (const Z of [z0, z1]) pts.push([X, Y, Z]);
   }
@@ -756,6 +796,6 @@ function audit(options = {}) {
 
   return { ok: failures === 0, lines, failures, items: A.length };
 }
-return { cam, proj, unproj, fit, frame, facing, viewOf, rrect, circ, circAt, ringAt, run, hull, poly, open, seg, clamp, lerp, rad, r2, prism, slab, cylinder, lathe, knurl, sideArc, sideSeam, boltRing, spring, stepS, tween, tset, tval, tdone, EASE, reducedMotion, setReducedMotion, mk, solid, put, draw, line, dot, place, group, setRecording, register, advance, pointer, disposer, audit, css, inject, tour, LAP };
+return { cam, proj, unproj, fit, frame, facing, viewOf, rrect, circ, circAt, ringAt, run, hull, poly, open, seg, clamp, lerp, rad, r2, prism, slab, cylinder, lathe, latheY, ringY, knurl, sideArc, sideSeam, boltRing, spring, stepS, tween, tset, tval, tdone, EASE, reducedMotion, setReducedMotion, mk, solid, put, draw, line, dot, place, group, setRecording, register, advance, pointer, disposer, audit, css, inject, tour, LAP };
 })();
 export { EL };

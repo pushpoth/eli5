@@ -35,6 +35,32 @@ export function cylinder(cx, cy, r, z0, z1, P, front, steps = 32) {
 }
 
 /**
+ * A surface of revolution about the y axis (the view axis) from a meridian of
+ * `[y, r]` — a lens barrel, a drum, a roller. Silhouette is the hull of every
+ * ring; the near end ring is the lid, and its inset is the crease.
+ */
+export function latheY(prof, cx, cz, P, { steps = 40 } = {}) {
+  const ring = (r, y) => {
+    const pts = [];
+    for (let i = 0; i < steps; i++) { const a = (i / steps) * 2 * Math.PI; pts.push(P(cx + Math.cos(a) * r, y, cz + Math.sin(a) * r)); }
+    return pts;
+  };
+  const sil = poly(hull(prof.flatMap(([y, r]) => ring(r, y))));
+  const [fy, fr] = prof[prof.length - 1];
+  return { paths: { sil, top: poly(ring(fr, fy)), crease: open(ring(Math.max(0.3, fr - 1.2), fy)) }, shape: { kind: "turnY", prof, cx, cz, steps } };
+}
+
+/**
+ * A flat ring on the plane at y: a lens mount, a collar seen face-on, a bezel.
+ * The `d` is two circles with the inner one as a hole (`evenodd`), so what is
+ * drawn behind the bore shows through.
+ */
+export function ringY(rIn, rOut, y, cx, cz, P, { steps = 48 } = {}) {
+  const circle = (r) => poly([...Array(steps)].map((_, i) => { const a = (i / steps) * 2 * Math.PI; return P(cx + Math.cos(a) * r, y, cz + Math.sin(a) * r); }));
+  return { paths: { sil: circle(rOut) + circle(rIn), top: "", crease: circle(rIn) }, shape: { kind: "ringY", rIn, rOut, cx, cz, y }, evenodd: true };
+}
+
+/**
  * A surface of revolution about the z axis from a meridian `prof`, a list of
  * `[z, r]` from one end to the other. Convex profiles only for now: the
  * silhouette is the hull of every ring, and the crease is the front run of the

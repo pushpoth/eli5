@@ -26,7 +26,7 @@ const PUBLIC = [
   "cam", "proj", "unproj", "fit", "frame", "facing", "viewOf",
   "rrect", "circ", "circAt", "ringAt", "run", "hull",
   "poly", "open", "seg", "clamp", "lerp", "rad", "r2",
-  "prism", "slab", "cylinder", "lathe",
+  "prism", "slab", "cylinder", "lathe", "latheY", "ringY",
   "knurl", "sideArc", "sideSeam", "boltRing",
   "spring", "stepS", "tween", "tset", "tval", "tdone", "EASE", "reducedMotion", "setReducedMotion",
   "mk", "solid", "put", "draw", "line", "dot", "place", "group", "setRecording",

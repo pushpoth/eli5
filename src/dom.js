@@ -35,6 +35,8 @@ export const recorded = () => shapes.slice();
  */
 export function draw(el, part, meta) {
   put(el, part.paths);
+  if (part.evenodd) el.sil.setAttribute("fill-rule", "evenodd");
+  if (meta && meta.recede) el.g.classList.add("el-recede");
   if (recording && part.shape && meta && meta.name) shapes.push({ shape: part.shape, name: meta.name, at: meta.at ?? [0, 0, 0] });
 }
 
