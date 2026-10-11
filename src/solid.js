@@ -10,10 +10,11 @@
  */
 import { rrect, circ, circAt, ringAt, hull, run, poly, open } from "./iso.js";
 
-/** A prism standing from z0 to z1: `{ sil, crease }`. */
+/** A prism standing from z0 to z1: `{ sil, top, crease }`. `top` is the lid, filled lighter than the body so the solid has volume. */
 export function prism(P, front, ring, inner, z0, z1) {
   return {
     sil: poly(hull(ringAt(P, ring, z1).concat(ringAt(P, ring, z0)))),
+    top: poly(ringAt(P, ring, z1)),
     crease: inner ? open(ringAt(P, run(inner, front), z1)) : "",
   };
 }
@@ -43,6 +44,7 @@ export function lathe(prof, P, front, { steps = 48 } = {}) {
   const rings = prof.map(([z, r]) => ringAt(P, circ(r, steps), z));
   const sil = poly(hull(rings.flat()));
   const [tz, tr] = prof[prof.length - 1];
+  const top = tr > 0.6 ? poly(ringAt(P, circ(tr, steps), tz)) : "";
   const crease = open(ringAt(P, run(circ(Math.max(0.3, tr - 1.1), steps), front), tz));
-  return { paths: { sil, crease }, shape: { kind: "turn", prof, steps } };
+  return { paths: { sil, top, crease }, shape: { kind: "turn", prof, steps } };
 }

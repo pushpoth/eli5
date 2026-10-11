@@ -5,9 +5,9 @@
  * default; `.dark`/`[data-theme="dark"]` and the figure's own `data-theme`
  * override it. The `--eli5-*` properties are the public theme.
  */
-const LIGHT = { plate: "#ffffff", hi: "#1b1b1e", mid: "#7b7b84", lo: "#c8c8ce", edge: "#3a3a40" };
-const DARK = { plate: "#0b0b0d", hi: "#e6e6ea", mid: "#8b8b93", lo: "#33333a", edge: "#9a9aa2" };
-const KEYS = ["plate", "hi", "mid", "lo", "edge"];
+const LIGHT = { plate: "#ffffff", face: "#ededf0", top: "#ffffff", hi: "#1b1b1e", mid: "#7b7b84", lo: "#c8c8ce", edge: "#3a3a40" };
+const DARK = { plate: "#0b0b0d", face: "#17171a", top: "#222227", hi: "#e6e6ea", mid: "#8b8b93", lo: "#33333a", edge: "#9a9aa2" };
+const KEYS = ["plate", "face", "top", "hi", "mid", "lo", "edge"];
 const vars = (p) => KEYS.map((k) => `--el-${k}:var(--eli5-${k},${p[k]});`).join("");
 const S = ":where([data-eli5]>svg)";
 
@@ -20,7 +20,8 @@ export function css() {
     `${S}{position:absolute;inset:0;width:100%;height:100%;display:block}`,
     `${S} :where(path,polygon,ellipse,line){fill:var(--el-plate);stroke:var(--el-mid);stroke-width:var(--el-sw);vector-effect:non-scaling-stroke;stroke-linejoin:round;stroke-linecap:round}`,
     `${S} :where(.el-nf){fill:none}`,
-    `${S} :where(.el-sil){stroke:var(--el-edge)}`,
+    `${S} :where(.el-sil){fill:var(--el-face);stroke:var(--el-edge)}`,
+    `${S} :where(.el-top){fill:var(--el-top);stroke:none}`,
     `${S} :where(.el-cr){fill:none;stroke:var(--el-lo)}`,
     `${S} :where(.el-hi){stroke:var(--el-hi)}`,
     `${S} :where(.el-lo){fill:none;stroke:var(--el-lo)}`,

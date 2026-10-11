@@ -14,14 +14,14 @@ export function mk(tag, attrs, parent) {
   return e;
 }
 
-/** A solid's two paths in one group: the silhouette (`.el-sil`) and its crease (`.el-cr`). */
+/** A solid's three paths in one group: the silhouette (`.el-sil`), the lid (`.el-top`) and the crease (`.el-cr`). */
 export function solid(parent) {
   const g = mk("g", {}, parent);
-  return { g, sil: mk("path", { class: "el-sil" }, g), cr: mk("path", { class: "el-cr" }, g) };
+  return { g, sil: mk("path", { class: "el-sil" }, g), top: mk("path", { class: "el-top" }, g), cr: mk("path", { class: "el-cr" }, g) };
 }
 
-/** Writes a solid's `{ sil, crease }` into a `solid()`'s two paths. */
-export const put = (el, paths) => { el.sil.setAttribute("d", paths.sil); el.cr.setAttribute("d", paths.crease || ""); };
+/** Writes a solid's `{ sil, top, crease }` into a `solid()`'s three paths. */
+export const put = (el, paths) => { el.sil.setAttribute("d", paths.sil); el.top.setAttribute("d", paths.top || ""); el.cr.setAttribute("d", paths.crease || ""); };
 
 /* the audit's shapes, collected as things are drawn */
 export const shapes = [];

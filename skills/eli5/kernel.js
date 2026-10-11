@@ -1,4 +1,4 @@
-/* eli5 kernel sha256:5836f94838b9093684cba6d17b2e6b585474f21f72dd832e7b0d8e972a9073f0 */
+/* eli5 kernel sha256:d9b65b0c4b7ea9048caa3876cc29dcb33e9a0853cad7b442dbfa5e4436b4009c */
 /*
  * EL: everything a figure may call. Read this index; the code under it is the
  * engine, and a figure never edits it. A change to the engine is a change to
@@ -190,10 +190,11 @@ function run(ring, keep) {
  */
 
 
-/** A prism standing from z0 to z1: `{ sil, crease }`. */
+/** A prism standing from z0 to z1: `{ sil, top, crease }`. `top` is the lid, filled lighter than the body so the solid has volume. */
 function prism(P, front, ring, inner, z0, z1) {
   return {
     sil: poly(hull(ringAt(P, ring, z1).concat(ringAt(P, ring, z0)))),
+    top: poly(ringAt(P, ring, z1)),
     crease: inner ? open(ringAt(P, run(inner, front), z1)) : "",
   };
 }
@@ -223,8 +224,9 @@ function lathe(prof, P, front, { steps = 48 } = {}) {
   const rings = prof.map(([z, r]) => ringAt(P, circ(r, steps), z));
   const sil = poly(hull(rings.flat()));
   const [tz, tr] = prof[prof.length - 1];
+  const top = tr > 0.6 ? poly(ringAt(P, circ(tr, steps), tz)) : "";
   const crease = open(ringAt(P, run(circ(Math.max(0.3, tr - 1.1), steps), front), tz));
-  return { paths: { sil, crease }, shape: { kind: "turn", prof, steps } };
+  return { paths: { sil, top, crease }, shape: { kind: "turn", prof, steps } };
 }
 
 /**
@@ -316,14 +318,14 @@ function mk(tag, attrs, parent) {
   return e;
 }
 
-/** A solid's two paths in one group: the silhouette (`.el-sil`) and its crease (`.el-cr`). */
+/** A solid's three paths in one group: the silhouette (`.el-sil`), the lid (`.el-top`) and the crease (`.el-cr`). */
 function solid(parent) {
   const g = mk("g", {}, parent);
-  return { g, sil: mk("path", { class: "el-sil" }, g), cr: mk("path", { class: "el-cr" }, g) };
+  return { g, sil: mk("path", { class: "el-sil" }, g), top: mk("path", { class: "el-top" }, g), cr: mk("path", { class: "el-cr" }, g) };
 }
 
-/** Writes a solid's `{ sil, crease }` into a `solid()`'s two paths. */
-const put = (el, paths) => { el.sil.setAttribute("d", paths.sil); el.cr.setAttribute("d", paths.crease || ""); };
+/** Writes a solid's `{ sil, top, crease }` into a `solid()`'s three paths. */
+const put = (el, paths) => { el.sil.setAttribute("d", paths.sil); el.top.setAttribute("d", paths.top || ""); el.cr.setAttribute("d", paths.crease || ""); };
 
 /* the audit's shapes, collected as things are drawn */
 const shapes = [];
@@ -465,9 +467,9 @@ function disposer() {
  * default; `.dark`/`[data-theme="dark"]` and the figure's own `data-theme`
  * override it. The `--eli5-*` properties are the public theme.
  */
-const LIGHT = { plate: "#ffffff", hi: "#1b1b1e", mid: "#7b7b84", lo: "#c8c8ce", edge: "#3a3a40" };
-const DARK = { plate: "#0b0b0d", hi: "#e6e6ea", mid: "#8b8b93", lo: "#33333a", edge: "#9a9aa2" };
-const KEYS = ["plate", "hi", "mid", "lo", "edge"];
+const LIGHT = { plate: "#ffffff", face: "#ededf0", top: "#ffffff", hi: "#1b1b1e", mid: "#7b7b84", lo: "#c8c8ce", edge: "#3a3a40" };
+const DARK = { plate: "#0b0b0d", face: "#17171a", top: "#222227", hi: "#e6e6ea", mid: "#8b8b93", lo: "#33333a", edge: "#9a9aa2" };
+const KEYS = ["plate", "face", "top", "hi", "mid", "lo", "edge"];
 const vars = (p) => KEYS.map((k) => `--el-${k}:var(--eli5-${k},${p[k]});`).join("");
 const S = ":where([data-eli5]>svg)";
 
@@ -480,7 +482,8 @@ function css() {
     `${S}{position:absolute;inset:0;width:100%;height:100%;display:block}`,
     `${S} :where(path,polygon,ellipse,line){fill:var(--el-plate);stroke:var(--el-mid);stroke-width:var(--el-sw);vector-effect:non-scaling-stroke;stroke-linejoin:round;stroke-linecap:round}`,
     `${S} :where(.el-nf){fill:none}`,
-    `${S} :where(.el-sil){stroke:var(--el-edge)}`,
+    `${S} :where(.el-sil){fill:var(--el-face);stroke:var(--el-edge)}`,
+    `${S} :where(.el-top){fill:var(--el-top);stroke:none}`,
     `${S} :where(.el-cr){fill:none;stroke:var(--el-lo)}`,
     `${S} :where(.el-hi){stroke:var(--el-hi)}`,
     `${S} :where(.el-lo){fill:none;stroke:var(--el-lo)}`,
