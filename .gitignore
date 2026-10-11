@@ -1,0 +1,7 @@
+# reference clones: third-party, read-only, with their own git history
+.agents/ref/
+
+# dependencies and caches
+node_modules/
+*.log
+.DS_Store
