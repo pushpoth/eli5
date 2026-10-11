@@ -1,4 +1,4 @@
-/* eli5 kernel sha256:dcd105ab2f2686885129db0120e0853a04c4fc21c9a23008cd4ce3fc4e40f1f6 */
+/* eli5 kernel sha256:5836f94838b9093684cba6d17b2e6b585474f21f72dd832e7b0d8e972a9073f0 */
 /*
  * EL: everything a figure may call. Read this index; the code under it is the
  * engine, and a figure never edits it. A change to the engine is a change to
@@ -633,41 +633,46 @@ function screenBox(s, P) {
 }
 /** The screen area two boxes share in px², so a hairline edge touch is not an overlap. */
 const sbArea = (p, q) => Math.max(0, Math.min(p[2], q[2]) - Math.max(p[0], q[0])) * Math.max(0, Math.min(p[3], q[3]) - Math.max(p[1], q[1]));
+const median = (a) => { const s = a.slice().sort((x, y) => x - y); return s[s.length >> 1]; };
+const inBox = (p, b) => p[0] >= b[0] && p[0] <= b[2] && p[1] >= b[1] && p[1] <= b[3];
+const xzOverlap = (a, b, tol) => a[0] < b[3] + tol && b[0] < a[3] + tol && a[2] < b[5] + tol && b[2] < a[5] + tol;
 
 /** Runs the three checks over what `draw` recorded, at the rest pose. Returns `{ ok, lines, failures }`. */
 function audit(options = {}) {
-  const order = options.order ?? 1.5, touch = options.touch ?? 0.35, into = options.into ?? 0.5, area = options.area ?? 6;
+  const order = options.order ?? 2.5, touch = options.touch ?? 0.35, into = options.into ?? 0.5, area = options.area ?? 6;
   const C = lastCamera;
   if (!C) return { ok: false, lines: ["  ✗ audit: no camera was recorded"], failures: 1 };
   const shapes = recorded();
   const P = proj(C), v = viewOf(C);
   const A = shapes.map((r) => {
     const box = aabb(r.shape);
-    const mid = [(box[0] + box[3]) / 2, (box[1] + box[4]) / 2, (box[2] + box[5]) / 2];
-    return { name: r.name, box, sb: screenBox(r.shape, P), depth: mid[0] * v[0] + mid[1] * v[1] + mid[2] * v[2] };
+    const pts = samplePoints(r.shape).map((p) => { const q = P(p[0], p[1], p[2]); return [q[0], q[1], p[0] * v[0] + p[1] * v[1] + p[2] * v[2]]; });
+    return { name: r.name, box, sb: screenBox(r.shape, P), pts };
   });
 
   const lines = [];
   let failures = 0;
   const fail = (s) => { failures++; lines.push(`  ✗ ${s}`); };
 
-  /* order: paint order is the recorded order (a later solid paints over an earlier one) */
+  /* order: paint order is the recorded order. Compare depth where the two actually
+     overlap on screen, not at their centroids, so a large backdrop is not mistaken
+     for a near part. */
   for (let i = 0; i < A.length; i++) for (let j = i + 1; j < A.length; j++) {
     if (A[i].name === A[j].name) continue;
-    /* only when the two share height: if one is wholly above the other the rule is
-       unambiguous (the higher is nearer and drawn later), so a floor and the parts
-       on it never raise a false order problem */
-    if (span(A[i].box, A[j].box) <= touch) continue;
     if (sbArea(A[i].sb, A[j].sb) < area) continue;
-    if (A[i].depth - A[j].depth > order) fail(`order: ${A[i].name} paints before ${A[j].name} but ${A[i].name} is nearer (at rest)`);
+    const di = A[i].pts.filter((p) => inBox(p, A[j].sb)).map((p) => p[2]);
+    const dj = A[j].pts.filter((p) => inBox(p, A[i].sb)).map((p) => p[2]);
+    if (!di.length || !dj.length) continue;
+    if (median(di) - median(dj) > order) fail(`order: ${A[i].name} paints before ${A[j].name} but ${A[i].name} is nearer where they overlap (at rest)`);
   }
 
-  /* support: rests on the ground, or its base sits on something it overlaps */
+  /* support: stands on the ground or another part, or is mounted on a backer behind it */
   const ground = Math.min(...A.map((x) => x.box[2]));
   for (const a of A) {
     if (a.box[2] <= ground + touch) continue;
-    const held = A.some((b) => b !== a && xyOverlap(a.box, b.box, 0) && b.box[5] >= a.box[2] - touch && b.box[2] < a.box[2]);
-    if (!held) fail(`support: ${a.name} rests on nothing`);
+    const stood = A.some((b) => b !== a && xyOverlap(a.box, b.box, 0) && b.box[5] >= a.box[2] - touch && b.box[2] < a.box[2]);
+    const backed = A.some((b) => b !== a && xzOverlap(a.box, b.box, 0) && b.box[4] <= a.box[1] + touch);
+    if (!stood && !backed) fail(`support: ${a.name} rests on nothing`);
   }
 
   /* clearance: footprints and heights both overlap by more than a hair */
