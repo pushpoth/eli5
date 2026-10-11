@@ -81,7 +81,7 @@ figure({
   parts: [
     { name: "body", shows: ["a rounded slab", "a top plate with a wind lever and a shutter button"] },
     { name: "lens", shows: ["concentric rings", "a glass at the centre"] },
-    { name: "curtain", shows: ["horizontal slats", "an edge wound on its drum"] },
+    { name: "curtain", shows: ["horizontal slats", "an opaque edge at the slit"] },
     { name: "slit", shows: ["the light between the two curtains"] },
   ],
   mount,

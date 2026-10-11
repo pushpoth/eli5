@@ -1,0 +1,8 @@
+{
+  "figure": "lighthouse.js",
+  "parts": [
+    { "name": "tower", "shows": ["a taper", "daymark bands", "a door"], "verdict": "yes", "note": "read from assets/look.png, rest and small" },
+    { "name": "rock", "shows": ["a rounded mass", "a contact with the ground"], "verdict": "yes", "note": "" },
+    { "name": "dome", "shows": ["a curved cap", "a ventilator"], "verdict": "yes", "note": "" }
+  ]
+}

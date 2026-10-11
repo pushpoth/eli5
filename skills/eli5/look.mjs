@@ -87,5 +87,5 @@ for (const s of SHOTS) {
 const outPath = resolve(arg("--out") ?? `eli5-${name}-look.png`);
 execFileSync(chrome, ["--headless=new", "--disable-gpu", "--no-sandbox", "--allow-file-access-from-files", "--hide-scrollbars", "--window-size=1520,1300", `--screenshot=${outPath}`, pathToFileURL(join(dir, "sheet.html")).href], { stdio: "ignore" });
 console.log(`sheet: ${outPath}`);
-console.log(`now read look.md against ${basename(outPath)}.`);
+console.log(`now read look.md against ${basename(outPath)}, then record it: node read.mjs <figure.js>.`);
 process.exit(failed ? 1 : 0);

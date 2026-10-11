@@ -1,0 +1,7 @@
+{
+  "figure": "boulders.js",
+  "parts": [
+    { "name": "ground", "shows": ["a floor"], "verdict": "yes", "note": "" },
+    { "name": "rock", "shows": ["a faceted top", "a shadowed side", "a contact with the ground"], "verdict": "no", "note": "they are flat discs: they read as coins lying on the plate, with no faceted top and no shadowed side" }
+  ]
+}

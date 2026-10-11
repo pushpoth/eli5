@@ -53,3 +53,18 @@ from the sheet.
 
 If you are unsure the figure is right, build `examples/board.js` the same way
 and put the two sheets side by side.
+
+## Record the read
+
+Answering this list is a judgment; `read.mjs` makes it a required artifact, so a
+figure cannot be handed over with the read skipped:
+
+```
+node read.mjs <figure.js> --new     # a template from the figure's parts
+# fill it after reading the sheet, one verdict per part, yes or no
+node read.mjs <figure.js>           # fails until every part reads
+```
+
+It cannot tell a true answer from a false one. It can only refuse to let the
+answer be missing. `examples/boulders.js` is the proof: its rocks pass the
+measured gate and its `read.json` answers `rock: no`, so `read.mjs` fails it.
