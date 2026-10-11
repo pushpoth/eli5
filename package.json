@@ -1,0 +1,14 @@
+{
+  "name": "eli5",
+  "version": "0.0.0",
+  "private": true,
+  "type": "module",
+  "description": "eli5 — a skill that turns an idea into an isometric figure that is a real machine whose working explains it.",
+  "engines": { "node": ">=20" },
+  "scripts": {
+    "kernel": "node scripts/kernel.mjs",
+    "build": "node skills/eli5/build.mjs",
+    "test": "node --test skills/eli5/test/",
+    "serve": "node skills/eli5/serve.mjs"
+  }
+}

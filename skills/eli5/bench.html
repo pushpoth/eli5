@@ -1,0 +1,123 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>eli5 · bench</title>
+<style>
+  :root { color-scheme: light; --bg: #f3f3f1; --card: #ffffff; --ink: #1b1b1e; --muted: #71717a; --line: #e2e2df; --edge: #d7d7d3; --field: var(--card); }
+  :root[data-theme="dark"], :root:not([data-theme="light"]) { }
+  @media (prefers-color-scheme: dark) { :root:not([data-theme="light"]) { color-scheme: dark; --bg: #08090a; --card: #0d0e10; --ink: #e6e6ea; --muted: #8a8c95; --line: #26272b; --edge: #26272b; } }
+  :root[data-theme="dark"] { color-scheme: dark; --bg: #08090a; --card: #0d0e10; --ink: #e6e6ea; --muted: #8a8c95; --line: #26272b; --edge: #26272b; }
+  :root[data-theme="light"] { color-scheme: light; --bg: #f3f3f1; --card: #ffffff; --ink: #1b1b1e; --muted: #71717a; --line: #e2e2df; --edge: #d7d7d3; }
+  * { box-sizing: border-box; }
+  body { margin: 0; min-height: 100vh; display: grid; place-items: center; padding: 24px 16px; background: var(--bg); color: var(--ink); font: 13px/1.5 ui-sans-serif, system-ui, -apple-system, Segoe UI, Roboto, sans-serif; }
+  #card { width: min(680px, var(--w, 100%)); }
+  #stage { border: 1px solid var(--edge); border-radius: 14px; background: var(--card); overflow: hidden; }
+  #stage:focus-visible { outline: 1.5px solid var(--ink); outline-offset: 2px; }
+  .bar { display: flex; flex-wrap: wrap; align-items: center; gap: 8px 14px; margin-top: 12px; }
+  .bar .lbl, output, button, #rules { font: 11px/1 ui-monospace, SFMono-Regular, Menlo, Consolas, monospace; letter-spacing: 0.02em; color: var(--muted); }
+  input[type="range"] { width: 160px; accent-color: var(--ink); }
+  button { cursor: pointer; background: var(--card); color: var(--ink); border: 1px solid var(--edge); border-radius: 999px; padding: 5px 11px; }
+  button[aria-pressed="true"] { background: var(--ink); color: var(--card); border-color: var(--ink); }
+  #out { margin: 12px 0 0; font: 11px/1.6 ui-monospace, SFMono-Regular, Menlo, Consolas, monospace; color: var(--muted); min-height: 1.6em; }
+  #means { margin: 4px 0 0; color: var(--ink); }
+  #rules { margin: 6px 0 0; }
+</style>
+</head>
+<body>
+<div id="card" data-eli5-card>
+  <div id="stage" tabindex="0" role="img" aria-label="figure"></div>
+  <div class="bar">
+    <span class="lbl">intensity</span>
+    <input id="int" type="range" min="0" max="1" step="0.01" value="0.5" aria-label="intensity">
+    <output id="ival"></output>
+    <span class="lbl">theme</span>
+    <button id="theme" type="button" aria-label="Switch between light and dark"></button>
+    <button id="play" type="button" aria-pressed="false">play</button>
+    <span id="playlbl" class="lbl">walks the tour</span>
+  </div>
+  <p id="out"></p>
+  <p id="means"></p>
+  <p id="rules"></p>
+</div>
+<script type="module">
+/*KERNEL*/
+
+/* ---------- the bench: controls, theme, play, and the query params ---------- */
+const params = new URLSearchParams(location.search);
+const $ = (s) => document.querySelector(s);
+EL.inject(document);
+const stage = $("#stage");
+const read = {
+  _t: null,
+  get textContent() { return this._t; },
+  set textContent(v) { const n = v ?? ""; if (n === this._t) return; this._t = n; $("#out").textContent = n; },
+};
+const RULES = ["hit", "order", "reach", "accent", "rest", "honesty", "cost", "clock", "radius", "quiet"];
+const lerpN = (a, b, t) => a + (b - a) * t;
+
+function figure(spec) {
+  stage.setAttribute("data-eli5", spec.name);
+  stage.setAttribute("aria-label", spec.label ?? spec.means ?? spec.name);
+  const svg = EL.mk("svg", { viewBox: "0 0 400 320", "aria-hidden": "true" });
+  stage.appendChild(svg);
+
+  const rng = spec.range ?? [0.5];
+  const toValue = (i) => rng.length >= 3 ? (i <= 0.5 ? lerpN(rng[0], rng[1], i / 0.5) : lerpN(rng[1], rng[2], (i - 0.5) / 0.5)) : rng[0];
+  const int = $("#int");
+  const start = params.has("intensity") ? Math.max(0, Math.min(1, parseFloat(params.get("intensity")))) : 0.5;
+  int.value = String(start);
+
+  const fig = spec.mount({ stage, svg, read, audit: { on: params.has("audit") } }, toValue(start));
+  const sync = () => { const v = toValue(parseFloat(int.value)); $("#ival").textContent = String(Math.round(v * 100) / 100); fig.set(v); };
+  int.addEventListener("input", sync);
+  $("#ival").textContent = String(Math.round(toValue(start) * 100) / 100);
+  read.textContent = spec.rest ?? "rest";
+
+  $("#means").textContent = spec.means ?? "";
+  $("#rules").textContent = (spec.rule ?? []).map((n) => String(n).padStart(2, "0") + " " + RULES[n - 1]).join(" · ");
+
+  const themeBtn = $("#theme");
+  const isDark = () => document.documentElement.dataset.theme ? document.documentElement.dataset.theme === "dark" : matchMedia("(prefers-color-scheme: dark)").matches;
+  const paintTheme = () => { themeBtn.textContent = isDark() ? "dark" : "light"; };
+  if (["light", "dark"].includes(params.get("theme"))) document.documentElement.dataset.theme = params.get("theme");
+  themeBtn.addEventListener("click", () => { document.documentElement.dataset.theme = isDark() ? "light" : "dark"; paintTheme(); });
+  paintTheme();
+
+  const play = $("#play");
+  let handle = null;
+  play.addEventListener("click", () => {
+    const on = play.getAttribute("aria-pressed") !== "true";
+    if (on) handle = EL.tour(stage, spec.tour ?? EL.LAP); else { handle?.stop(); handle = null; }
+    play.setAttribute("aria-pressed", String(on));
+  });
+
+  if (params.get("w")) document.documentElement.style.setProperty("--w", params.get("w") + "px");
+  const atPointer = (x, y) => {
+    const r = svg.getBoundingClientRect();
+    stage.dispatchEvent(new PointerEvent("pointermove", { clientX: r.left + (x / 400) * r.width, clientY: r.top + (y / 320) * r.height, bubbles: true }));
+  };
+  const at = params.get("at");
+  if (params.has("settle")) {
+    /* a deterministic settle for captures: rAF may not advance in a headless run.
+       Deferred, so layout has given the svg a size before the pointer is injected. */
+    setTimeout(() => {
+      let t = 0;
+      const run = (n) => { for (let i = 0; i < n; i++) { t += 16; EL.advance(0.016, t); } };
+      if (params.get("play") === "1") play.click();
+      run(120);
+      if (at) { const [x, y] = at.split(",").map(Number); atPointer(x, y); run(240); }
+      if (params.get("play") === "1") run(600);
+    }, 50);
+  } else if (at) {
+    requestAnimationFrame(() => atPointer(...at.split(",").map(Number)));
+  }
+  if (params.get("play") === "1" && !params.has("settle")) play.click();
+  window.eli5 = { spec, fig };
+}
+
+/*FIGURE*/
+</script>
+</body>
+</html>
