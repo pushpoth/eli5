@@ -1,43 +1,59 @@
-# Typewriter — how a key prints a letter
+# Typewriter, two houses
 
-A third worked example, chosen to stress the machinery differently from the
-lighthouse (a field) and the shutter (parallel plates): a **kinematic chain**,
-where a control drives a linkage and the machine leaves a mark.
+The same subject — a typewriter's key printing a letter — built with the two
+reference skills: [eli5](eli5/typewriter.js) (ours) and [anatomy](anatomy/build.mjs)
+(the reference craft kit). The point is the comparison, not either figure alone.
 
-- Figure: [`eli5/typewriter.js`](eli5/typewriter.js) → `eli5/eli5-typewriter.html`
-- Sheet: [`eli5/assets/look.png`](eli5/assets/look.png)
+## What each produced
 
-## The figure
+**eli5 — `Typebar`.** A cutaway: a keyboard of round keys, a fan of typebars
+converging at the type guide, a platen roller on two posts, paper, and the pointer
+pressing a key so its typebar strikes the ribbon against the platen and prints a
+mark. Line-and-plate style, two tones, ~13 solids, one page, no dependencies.
+Passes static + measured + look + read.
 
-**Typebar.** A typewriter in cutaway. The pointer presses a key; its typebar
-swings up out of the basket and strikes the ribbon against the platen, printing
-a mark on the paper. The read-out names the key (`key 3·7`). Letters stay out of
-the drawing (rule 10): the impression is a mark, the read-out carries the name.
+**anatomy — `Typewriter`.** A machine on a base plate on feet: side frames, a
+turned platen roller (its own arbitrary-axis `lathe`) with knobs and an escapement
+ratchet, carriage rails, paper, ribbon spools and band, a keyboard of keycaps on
+stems, and a type basket of `tube` typebars up to the guide. Four-tone shading,
+a framed card, ~90 parts. Framework-free build script over the kit.
 
-Parts: frame (a slab base and a keyboard of round keys), post (a pillar under each
-end of the platen), platen (a roller across the frame), paper (a sheet over the
-platen), typebar (a fan in the basket, and the one in play lifting to the platen).
+## The comparison
 
-## What it added to the kernel
+| | eli5 | anatomy |
+|---|---|---|
+| Source size | ~120 lines, one file | ~200 lines + kit imports |
+| Parts | ~13 solids | ~90 (keycaps, stems, tubes, fittings) |
+| Rendering | one fill tone + a lid; a line drawing | four-tone shaded solids |
+| Helpers used | slab/cylinder/lathe/latheX/ringY; lines | lathe/disc/sphere/prism/tube/arc/dots/sideSeam |
+| Output | one self-contained page, dep-free | one self-contained page + the kit inlined |
+| Motion | a strike spring on the typebar | springs/tweens; idle tour |
+| Verification run | static + audit + look + read (all pass) | build + capture; **audit not run** |
 
-- **`latheX`** — a surface of revolution about the x axis, for the platen roller
-  (we had z and y). With `latheY` and `ringY` this closes the three axes.
-- Nothing else. The figure is otherwise built from the existing solids and lines,
-  and it reads: it passes `validate`, `audit · 27 items`, `look`, and `read`.
+## Honest assessment
 
-## What the audit caught
+- **anatomy makes detail cheap and volume real.** The helper library (lathe,
+  disc, tube, arc, dotsOf, sideSeam) is the difference: a turned platen, tube
+  typebars and a bolt ring are a few lines each, where eli5 draws a roller and a
+  fan of lines. Four-tone shading gives the parts volume that eli5's two tones
+  only hint at.
+- **anatomy's bar is much higher, and my one-pass build did not reach it.** The
+  first anatomy typewriter is blocky: the side frames read as slabs, and the
+  platen/paper render as a large block I did not finish debugging (the lathe is
+  correct in isolation; the composition does not read). Its own `SKILL.md` wants
+  a parts list, an audit to zero, 4× close-ups of every joint, and a read — none
+  of which this pass did. It is a sketch of anatomy's ceiling, not a figure at it.
+- **The interesting failure is shared, not ours.** Both houses need the *read*:
+  anatomy's rules say "the reader names it at a glance", and neither skill
+  mechanically forces it. eli5 now records the read (`read.mjs`); anatomy relies
+  on the agent reading its PNGs. My anatomy pass did exactly what the shutter
+  once did — produced the page without truly reading it.
 
-- Keys overlapping row to row (pitch 4 < diameter 5): fixed by a wider pitch.
-- The platen and the ribbon reels floating: fixed by giving the platen two posts
-  to rest on and dropping the free reels.
-- A coplanar sliver between the platen end and a side wall: fixed by replacing the
-  walls with the posts rather than by loosening the tolerance.
+## Takeaway for our technique
 
-## What is still thin
-
-- The **carriage / escapement** (the paper stepping one space per strike) is not
-  modelled; the marks simply accumulate. That is the next mechanism to add.
-- The typebars are drawn as lines, not solids, so they carry no volume and the
-  audit does not see them.
-- The keys are plain cylinders; a real keycap has a bezel and a ring. Detail on
-  the keyboard is deliberately spared (it recedes), but the play should still show.
+anatomy's two advantages are **the parts library** (detail is cheap) and **tone**
+(volume is real); our two advantages are **the frozen kernel** (a ~120-line figure
+with no dependencies and a stable API) and **the recorded read** (legibility is a
+gate, not a hope). The synthesis is already the plan: keep the small frozen
+kernel and the read gate, and keep growing the parts library and the shading
+toward anatomy's — which is what the last few milestones have been doing.
