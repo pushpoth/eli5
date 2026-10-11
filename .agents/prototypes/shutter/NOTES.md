@@ -18,6 +18,22 @@ closed; the slider is the widest slit, so a stronger setting reaches a slower
 speed. Parts: film (a portrait frame with sprocket holes), curtain (horizontal
 slats), slit (the light between the curtains).
 
+## Step 1 — rebuilt with the camera around it
+
+The first version read as "a vertical split door". The cause was not the
+machinery: it was the concept. A shutter is an internal part whose identity
+depends on the camera around it, and I had drawn the fragment. So the figure was
+rebuilt as the camera itself — a rounded body, a lens of concentric rings on the
+front, a top plate with a prism, a wind lever and a shutter button, a rewind
+knob — with the two curtains and the slit seen through the lens. Only then does
+it read as a camera shutter, at 1×, at 240px, and in both themes.
+
+The read of `look.md` item 2, answered honestly: body ✓ (slab; top plate with a
+wind lever and a shutter button), lens ✓ (concentric rings), slit ✓ (the light
+between the curtains), curtain — slats ✓ but "an edge wound on its drum" is
+**not shown**, so partial. The gap that remains — an object with volume and
+small true parts — is what step 2's shading and parts library are for.
+
 ## What the gates did
 
 All three pass: `validate` ok, `audit passed · 10 items`, and the eight-view
