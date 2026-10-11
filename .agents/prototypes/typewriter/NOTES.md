@@ -28,7 +28,7 @@ a framed card, ~90 parts. Framework-free build script over the kit.
 | Helpers used | slab/cylinder/lathe/latheX/ringY; lines | lathe/disc/sphere/prism/tube/arc/dots/sideSeam |
 | Output | one self-contained page, dep-free | one self-contained page + the kit inlined |
 | Motion | a strike spring on the typebar | springs/tweens; idle tour |
-| Verification run | static + audit + look + read (all pass) | build + capture; **audit not run** |
+| Verification run | static + audit + look + read (all pass) | build + **audit** (pass) + **line check** (pass) |
 
 ## Honest assessment
 
@@ -37,12 +37,16 @@ a framed card, ~90 parts. Framework-free build script over the kit.
   typebars and a bolt ring are a few lines each, where eli5 draws a roller and a
   fan of lines. Four-tone shading gives the parts volume that eli5's two tones
   only hint at.
-- **anatomy's bar is much higher, and my one-pass build did not reach it.** The
-  first anatomy typewriter is blocky: the side frames read as slabs, and the
-  platen/paper render as a large block I did not finish debugging (the lathe is
-  correct in isolation; the composition does not read). Its own `SKILL.md` wants
-  a parts list, an audit to zero, 4× close-ups of every joint, and a read — none
-  of which this pass did. It is a sketch of anatomy's ceiling, not a figure at it.
+- **anatomy's bar is much higher, and meeting it took real work.** The first
+  pass was blocky and its platen/paper collided. Pushing it to the house standard
+  meant recording every solid and running `build.mjs --audit` to **zero**: fixing
+  the keycaps sunk into their stems, the knobs and ratchet sunk into the platen,
+  the rails sunk into the plates, and the typebars hanging off their mounts (each
+  now ends on a key lever below and the type guide above). Two more gates then
+  passed: the line check (`0 ends float`, console clean) and a first read.
+  What is still short of the bar: a proper ≥40-part list written down, 4×
+  close-ups of every joint, and live motion (the anatomy page only reads the
+  pointer — no strike animation yet).
 - **The interesting failure is shared, not ours.** Both houses need the *read*:
   anatomy's rules say "the reader names it at a glance", and neither skill
   mechanically forces it. eli5 now records the read (`read.mjs`); anatomy relies
