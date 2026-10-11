@@ -15,10 +15,7 @@ function mount({ stage, svg, read }, value) {
   const P = EL.proj(C), front = EL.facing(C);
   const g = EL.mk("g", {}, svg);
 
-  {
-    const s = EL.solid(g);
-    EL.put(s, EL.slab(-8, -8, EXT + 8, EXT + 8, 7, -6, 0, P, front).paths);
-  }
+  EL.draw(EL.solid(g), EL.slab(-8, -8, EXT + 8, EXT + 8, 7, -6, 0, P, front), { name: "plinth", at: [EXT / 2, EXT / 2, -3] });
   const cols = [];
   for (let j = 0; j < N; j++) for (let i = 0; i < N; i++) {
     const cx = i * CELL + CELL / 2, cy = j * CELL + CELL / 2;
@@ -33,7 +30,7 @@ function mount({ stage, svg, read }, value) {
       const h = Math.max(1, c.sp.x);
       if (h === c.drawn) continue;
       c.drawn = h;
-      EL.put(c.el, EL.cylinder(c.cx, c.cy, R, 0, h, P, front, 16).paths);
+      EL.draw(c.el, EL.cylinder(c.cx, c.cy, R, 0, h, P, front, 16), { name: "pillar", at: [c.cx, c.cy, h / 2] });
       c.el.sil.classList.toggle("el-hi", h > HMAX * 0.6);
     }
     return moving;
@@ -67,5 +64,9 @@ figure({
   range: [26, 44, 66],
   rest: "rest",
   tour: [[80, 220], [320, 140], [200, 60], null],
+  parts: [
+    { name: "plinth", shows: ["a rounded slab", "a contact with the ground"] },
+    { name: "pillar", shows: ["a round column", "a rise under the pointer"] },
+  ],
   mount,
 });

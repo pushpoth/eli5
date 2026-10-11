@@ -17,6 +17,7 @@
  *   proj(C)                   returns P(x, y, z) -> [sx, sy]
  *   unproj(C, sx, sy, z)      the world [x, y] under a screen point, on the plane at height z
  *   facing(C)                 returns front(sample): whether a ring sample faces the camera
+ *   viewOf(C)                 the unit world direction toward the viewer
  * Solids (return { paths: { sil, crease }, shape })
  *   slab(x0, y0, x1, y1, r, z0, z1, P, front, opts?)    a rounded box; opts { inset, steps }
  *   cylinder(cx, cy, r, z0, z1, P, front, steps?)       a round post, puck, foot or boss
@@ -47,4 +48,7 @@
  *   el-sil  the silhouette's stroke     el-cr  the crease (dim)     el-hi  the bright stroke, the only highlight
  *   el-lo   a dim line                  el-dash a dashed guide
  *   el-dot  a bright dot                el-dot.m a medium dot
+ *
+ * The bench's business, not a figure's: setRecording(on) and audit() run the
+ * measured gate; a figure only draws through EL.draw, which records its shape.
  */

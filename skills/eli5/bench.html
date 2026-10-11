@@ -69,7 +69,13 @@ function figure(spec) {
   const start = params.has("intensity") ? Math.max(0, Math.min(1, parseFloat(params.get("intensity")))) : 0.5;
   int.value = String(start);
 
-  const fig = spec.mount({ stage, svg, read, audit: { on: params.has("audit") } }, toValue(start));
+  const auditing = params.has("audit");
+  if (auditing) EL.setRecording(true);
+  const fig = spec.mount({ stage, svg, read, audit: { on: auditing } }, toValue(start));
+  if (auditing) {
+    try { document.body.setAttribute("data-audit", JSON.stringify(EL.audit())); }
+    catch (e) { document.body.setAttribute("data-audit", JSON.stringify({ ok: false, lines: [`  ✗ audit threw: ${e.message}`], failures: 1 })); }
+  }
   const sync = () => { const v = toValue(parseFloat(int.value)); $("#ival").textContent = String(Math.round(v * 100) / 100); fig.set(v); };
   int.addEventListener("input", sync);
   $("#ival").textContent = String(Math.round(toValue(start) * 100) / 100);

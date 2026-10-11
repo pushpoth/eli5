@@ -104,6 +104,43 @@ So we leave it in, deliberately, as the first test case for our own technique's
 that make each part what it claims to be, at 240px and at 4×?" A boulder must show
 a faceted top, a shadowed side and a contact with the ground; these show none.
 
+## The third house — `eli5/`
+
+A third version of the same lighthouse, drawn on our own kernel (`eli5/`),
+built as we went. It is the reference figure for the technique, and the first
+thing the three gates were run against.
+
+Run the gates on it:
+
+```sh
+node skills/eli5/validate.mjs .agents/prototypes/lighthouse/eli5/lighthouse.js   # gate 1: text
+node skills/eli5/audit.mjs    .agents/prototypes/lighthouse/eli5/lighthouse.js   # gate 2: geometry
+node skills/eli5/look.mjs     .agents/prototypes/lighthouse/eli5/lighthouse.js --answer 300,140 --out look.png   # gate 3: by eye
+```
+
+What each gate did to the output:
+
+- **The measured gate earned its place immediately.** The first audit of the
+  hand-built lighthouse found 40 problems: bars sunk into the lantern's base and
+  top rings and the ventilator sunk into the dome (clearance), the lens floating
+  above its base (support), and the lens painting over cage bars that are nearer
+  than it (order — the wrapping part, split into a far half and a near half).
+  Fixing them (touching parts, and drawing far bars → lens → near bars) took it to
+  **`audit passed · 18 items`**. Every one of those was invisible at 1×.
+- **The audit is honest about being approximate.** Its screen test is boxes of
+  projected shape points, not true outlines, so it reports false positives (a
+  wide floor's centroid reads "nearer" than the parts on it) until the checks are
+  filtered sensibly — order is only checked where two shapes share height. On a
+  broken control figure it still catches a floating box and an interpenetration,
+  so it is not vacuous.
+- **Gate 1 is a net, not a proof.** It flagged the lighthouse for a colour it did
+  not set (`Array.prototype.filter` matching the word `filter`), and was
+  tightened. It also enforces the contract — `parts`, `tour`, one loop,
+  `EL.pointer`, no DOM — which is what keeps a figure auditable at all.
+- **Gate 3 produced the sheet** (`eli5/assets/look.png`): rest, answer, 240px,
+  240px-answer, intensity 0, intensity 1, dark, light, with each read-out. The
+  part-feature question in `look.md` is the one the boulder case below is for.
+
 ## The one real difference
 
 Both houses draw the same way underneath (orthographic camera, world-space

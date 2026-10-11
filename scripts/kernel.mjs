@@ -20,16 +20,16 @@ const HEAD = readFileSync(here("../src/kernel.head.js"), "utf8").trimEnd();
 const OUT = here("../skills/eli5/kernel.js");
 
 /* Order matters only in that the IIFE runs top to bottom; functions hoist. */
-const FILES = ["iso", "solid", "motion", "dom", "stage", "theme", "tour"];
+const FILES = ["iso", "solid", "motion", "dom", "stage", "theme", "tour", "audit"];
 /* Exactly the names a figure may call. test/kernel.test.mjs holds this to EL's keys. */
 const PUBLIC = [
-  "cam", "proj", "unproj", "fit", "facing",
+  "cam", "proj", "unproj", "fit", "facing", "viewOf",
   "rrect", "circ", "circAt", "ringAt", "run", "hull",
   "poly", "open", "seg", "clamp", "lerp", "rad", "r2",
   "prism", "slab", "cylinder", "lathe",
   "spring", "stepS", "tween", "tset", "tval", "tdone", "EASE", "reducedMotion", "setReducedMotion",
-  "mk", "solid", "put", "draw", "line", "dot", "place", "group",
-  "register", "advance", "pointer", "disposer",
+  "mk", "solid", "put", "draw", "line", "dot", "place", "group", "setRecording",
+  "register", "advance", "pointer", "disposer", "audit",
   "css", "inject", "tour", "LAP",
 ];
 

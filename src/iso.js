@@ -27,7 +27,17 @@ export const open = (pts) => (pts.length < 2 ? "" : "M" + pts.map((p) => r2(p[0]
 /* ---------- projection ---------- */
 
 /** An orthographic camera. `az` is in radians, `k` is sin(elevation) (.5 is the 2:1 view), `S` the scale. */
-export const cam = (azDeg, k, S) => ({ az: rad(azDeg), k, S, ox: 0, oy: 0 });
+export const cam = (azDeg, k, S) => { const C = { az: rad(azDeg), k, S, ox: 0, oy: 0 }; lastCamera = C; return C; };
+
+/** The most recent camera, so the audit can measure the drawing without the figure handing it over. */
+export let lastCamera = null;
+
+/** The unit world direction toward the viewer for a camera: the axis the projection drops. */
+export function viewOf(C) {
+  const s = Math.sin(C.az), c = Math.cos(C.az), zf = Math.sqrt(1 - C.k * C.k);
+  const v = [s, c, C.k / zf], m = Math.hypot(v[0], v[1], v[2]);
+  return [v[0] / m, v[1] / m, v[2] / m];
+}
 
 /** The projector for the camera as it is now. */
 export function proj(C) {

@@ -8,6 +8,7 @@
 import { readFileSync, realpathSync, writeFileSync } from "node:fs";
 import { resolve } from "node:path";
 import { fileURLToPath } from "node:url";
+import { validate } from "./validate.mjs";
 
 const here = (p) => fileURLToPath(new URL(p, import.meta.url));
 
@@ -38,6 +39,15 @@ if (process.argv[1] && same(realpathSync(process.argv[1]), realpathSync(here("./
     process.exit(2);
   }
   const figure = readFileSync(src, "utf8");
+  const problems = validate(figure);
+  if (problems.length) {
+    for (const p of problems) console.error(`  ✗ ${p}`);
+    if (!process.argv.includes("--force")) {
+      console.error(`${src}: rejected by the static check. Fix it, or pass --force to build anyway.`);
+      process.exit(1);
+    }
+    console.error(`${src}: built anyway (--force).`);
+  }
   const file = resolve(out ?? `eli5-${nameOf(figure) ?? "figure"}.html`);
   writeFileSync(file, assemble(figure));
   console.log(file);

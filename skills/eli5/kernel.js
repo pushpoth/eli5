@@ -1,4 +1,4 @@
-/* eli5 kernel sha256:023544b8325cfac22384ca06aca41fb27b79d5837843fa6178d5d7d453084d0d */
+/* eli5 kernel sha256:dcd105ab2f2686885129db0120e0853a04c4fc21c9a23008cd4ce3fc4e40f1f6 */
 /*
  * EL: everything a figure may call. Read this index; the code under it is the
  * engine, and a figure never edits it. A change to the engine is a change to
@@ -18,6 +18,7 @@
  *   proj(C)                   returns P(x, y, z) -> [sx, sy]
  *   unproj(C, sx, sy, z)      the world [x, y] under a screen point, on the plane at height z
  *   facing(C)                 returns front(sample): whether a ring sample faces the camera
+ *   viewOf(C)                 the unit world direction toward the viewer
  * Solids (return { paths: { sil, crease }, shape })
  *   slab(x0, y0, x1, y1, r, z0, z1, P, front, opts?)    a rounded box; opts { inset, steps }
  *   cylinder(cx, cy, r, z0, z1, P, front, steps?)       a round post, puck, foot or boss
@@ -48,6 +49,9 @@
  *   el-sil  the silhouette's stroke     el-cr  the crease (dim)     el-hi  the bright stroke, the only highlight
  *   el-lo   a dim line                  el-dash a dashed guide
  *   el-dot  a bright dot                el-dot.m a medium dot
+ *
+ * The bench's business, not a figure's: setRecording(on) and audit() run the
+ * measured gate; a figure only draws through EL.draw, which records its shape.
  */
 const EL = (() => {
 /**
@@ -79,7 +83,17 @@ const open = (pts) => (pts.length < 2 ? "" : "M" + pts.map((p) => r2(p[0]) + " "
 /* ---------- projection ---------- */
 
 /** An orthographic camera. `az` is in radians, `k` is sin(elevation) (.5 is the 2:1 view), `S` the scale. */
-const cam = (azDeg, k, S) => ({ az: rad(azDeg), k, S, ox: 0, oy: 0 });
+const cam = (azDeg, k, S) => { const C = { az: rad(azDeg), k, S, ox: 0, oy: 0 }; lastCamera = C; return C; };
+
+/** The most recent camera, so the audit can measure the drawing without the figure handing it over. */
+let lastCamera = null;
+
+/** The unit world direction toward the viewer for a camera: the axis the projection drops. */
+function viewOf(C) {
+  const s = Math.sin(C.az), c = Math.cos(C.az), zf = Math.sqrt(1 - C.k * C.k);
+  const v = [s, c, C.k / zf], m = Math.hypot(v[0], v[1], v[2]);
+  return [v[0] / m, v[1] / m, v[2] / m];
+}
 
 /** The projector for the camera as it is now. */
 function proj(C) {
@@ -565,6 +579,109 @@ function tour(stage, stops = LAP, onStop) {
     },
   };
 }
-return { cam, proj, unproj, fit, facing, rrect, circ, circAt, ringAt, run, hull, poly, open, seg, clamp, lerp, rad, r2, prism, slab, cylinder, lathe, spring, stepS, tween, tset, tval, tdone, EASE, reducedMotion, setReducedMotion, mk, solid, put, draw, line, dot, place, group, register, advance, pointer, disposer, css, inject, tour, LAP };
+
+/**
+ * eli5 · audit — the measured gate, lightweight and honest about being an
+ * approximation. Every solid is drawn through `draw`, which records its shape;
+ * this reads them back and checks, from axis-aligned footprints and the camera,
+ * three things the eye misses:
+ *
+ *   order      a solid painted before a solid that is nearer on screen
+ *   support    a solid that rests on nothing and floats
+ *   clearance  two solids that pass through each other
+ *
+ * It is not a proof: footprints are boxes, not the true outline, so it is
+ * generous with tolerances on purpose. It finds the gross faults, and the look
+ * (by eye) finds the rest.
+ */
+
+
+
+const aabb = (s) => {
+  if (s.kind === "box") return [s.x0, s.y0, s.z0, s.x1, s.y1, s.z1];
+  if (s.kind === "cyl") return [s.cx - s.r, s.cy - s.r, s.z0, s.cx + s.r, s.cy + s.r, s.z1];
+  if (s.kind === "turn") {
+    const ps = s.prof, R = Math.max(...ps.map((p) => p[1]));
+    return [-R, -R, Math.min(...ps.map((p) => p[0])), R, R, Math.max(...ps.map((p) => p[0]))];
+  }
+  return [0, 0, 0, 0, 0, 0];
+};
+const xyOverlap = (a, b, tol) => a[0] < b[3] + tol && b[0] < a[3] + tol && a[1] < b[4] + tol && b[1] < a[4] + tol;
+const span = (a, b) => Math.min(a[5], b[5]) - Math.max(a[2], b[2]); // > 0 overlap in z; < 0 gap
+
+/** Representative world points on a shape, so its screen box is of the shape, not of its bounding box. */
+function samplePoints(s) {
+  const [x0, y0, z0, x1, y1, z1] = aabb(s);
+  const pts = [];
+  if (s.kind === "cyl" || s.kind === "turn") {
+    const R = s.kind === "cyl" ? s.r : Math.max(...s.prof.map((p) => p[1]));
+    const cx = s.kind === "cyl" ? s.cx : 0, cy = s.kind === "cyl" ? s.cy : 0;
+    for (let k = 0; k < 12; k++) { const a = (k * Math.PI) / 6; for (const z of [z0, z1]) pts.push([cx + Math.cos(a) * R, cy + Math.sin(a) * R, z]); }
+  } else {
+    for (const X of [x0, x1]) for (const Y of [y0, y1]) for (const Z of [z0, z1]) pts.push([X, Y, Z]);
+  }
+  return pts;
+}
+
+function screenBox(s, P) {
+  let a = 1e9, b = -1e9, c = 1e9, d = -1e9;
+  for (const [X, Y, Z] of samplePoints(s)) {
+    const q = P(X, Y, Z);
+    a = Math.min(a, q[0]); b = Math.max(b, q[0]); c = Math.min(c, q[1]); d = Math.max(d, q[1]);
+  }
+  return [a, c, b, d];
+}
+/** The screen area two boxes share in px², so a hairline edge touch is not an overlap. */
+const sbArea = (p, q) => Math.max(0, Math.min(p[2], q[2]) - Math.max(p[0], q[0])) * Math.max(0, Math.min(p[3], q[3]) - Math.max(p[1], q[1]));
+
+/** Runs the three checks over what `draw` recorded, at the rest pose. Returns `{ ok, lines, failures }`. */
+function audit(options = {}) {
+  const order = options.order ?? 1.5, touch = options.touch ?? 0.35, into = options.into ?? 0.5, area = options.area ?? 6;
+  const C = lastCamera;
+  if (!C) return { ok: false, lines: ["  ✗ audit: no camera was recorded"], failures: 1 };
+  const shapes = recorded();
+  const P = proj(C), v = viewOf(C);
+  const A = shapes.map((r) => {
+    const box = aabb(r.shape);
+    const mid = [(box[0] + box[3]) / 2, (box[1] + box[4]) / 2, (box[2] + box[5]) / 2];
+    return { name: r.name, box, sb: screenBox(r.shape, P), depth: mid[0] * v[0] + mid[1] * v[1] + mid[2] * v[2] };
+  });
+
+  const lines = [];
+  let failures = 0;
+  const fail = (s) => { failures++; lines.push(`  ✗ ${s}`); };
+
+  /* order: paint order is the recorded order (a later solid paints over an earlier one) */
+  for (let i = 0; i < A.length; i++) for (let j = i + 1; j < A.length; j++) {
+    if (A[i].name === A[j].name) continue;
+    /* only when the two share height: if one is wholly above the other the rule is
+       unambiguous (the higher is nearer and drawn later), so a floor and the parts
+       on it never raise a false order problem */
+    if (span(A[i].box, A[j].box) <= touch) continue;
+    if (sbArea(A[i].sb, A[j].sb) < area) continue;
+    if (A[i].depth - A[j].depth > order) fail(`order: ${A[i].name} paints before ${A[j].name} but ${A[i].name} is nearer (at rest)`);
+  }
+
+  /* support: rests on the ground, or its base sits on something it overlaps */
+  const ground = Math.min(...A.map((x) => x.box[2]));
+  for (const a of A) {
+    if (a.box[2] <= ground + touch) continue;
+    const held = A.some((b) => b !== a && xyOverlap(a.box, b.box, 0) && b.box[5] >= a.box[2] - touch && b.box[2] < a.box[2]);
+    if (!held) fail(`support: ${a.name} rests on nothing`);
+  }
+
+  /* clearance: footprints and heights both overlap by more than a hair */
+  for (let i = 0; i < A.length; i++) for (let j = i + 1; j < A.length; j++) {
+    const a = A[i].box, b = A[j].box;
+    const zs = span(a, b);
+    if (zs <= into) continue;                             // touching or apart, not passing through
+    const inX = Math.min(a[3], b[3]) - Math.max(a[0], b[0]);
+    const inY = Math.min(a[4], b[4]) - Math.max(a[1], b[1]);
+    if (inX > into && inY > into) fail(`clearance: ${A[i].name} and ${A[j].name} pass through each other by ${Math.min(inX, inY, zs).toFixed(1)}`);
+  }
+
+  return { ok: failures === 0, lines, failures, items: A.length };
+}
+return { cam, proj, unproj, fit, facing, viewOf, rrect, circ, circAt, ringAt, run, hull, poly, open, seg, clamp, lerp, rad, r2, prism, slab, cylinder, lathe, spring, stepS, tween, tset, tval, tdone, EASE, reducedMotion, setReducedMotion, mk, solid, put, draw, line, dot, place, group, setRecording, register, advance, pointer, disposer, audit, css, inject, tour, LAP };
 })();
 export { EL };
