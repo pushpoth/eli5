@@ -50,6 +50,18 @@ export function latheY(prof, cx, cz, P, { steps = 40 } = {}) {
   return { paths: { sil, top: poly(ring(fr, fy)), crease: open(ring(Math.max(0.3, fr - 1.2), fy)) }, shape: { kind: "turnY", prof, cx, cz, steps } };
 }
 
+/** A surface of revolution about the x axis from a meridian of `[x, r]`: a platen roller, a spool, an axle. */
+export function latheX(prof, cy, cz, P, { steps = 40 } = {}) {
+  const ring = (r, x) => {
+    const pts = [];
+    for (let i = 0; i < steps; i++) { const a = (i / steps) * 2 * Math.PI; pts.push(P(x, cy + Math.cos(a) * r, cz + Math.sin(a) * r)); }
+    return pts;
+  };
+  const sil = poly(hull(prof.flatMap(([x, r]) => ring(r, x))));
+  const [fx, fr] = prof[prof.length - 1];
+  return { paths: { sil, top: poly(ring(fr, fx)), crease: open(ring(Math.max(0.3, fr - 1.2), fx)) }, shape: { kind: "turnX", prof, cy, cz, steps } };
+}
+
 /**
  * A flat ring on the plane at y: a lens mount, a collar seen face-on, a bezel.
  * The `d` is two circles with the inner one as a hole (`evenodd`), so what is

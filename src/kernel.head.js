@@ -24,6 +24,7 @@
  *   cylinder(cx, cy, r, z0, z1, P, front, steps?)       a round post, puck, foot or boss
  *   lathe(prof, P, front, opts?)                        a surface of revolution about z from a meridian [[z, r], …]; convex only
  *   latheY(prof, cx, cz, P, opts?)                      the same about the y axis: a lens barrel, a drum, a roller
+ *   latheX(prof, cy, cz, P, opts?)                      the same about the x axis: a platen roller, a spool, an axle
  *   ringY(rIn, rOut, y, cx, cz, P, opts?)               a flat ring on the plane at y (evenodd): a lens mount with a bore
  *   prism(P, front, ring, inner, z0, z1)                the three path strings of any ring pair, on screen
  * Parts (each returns a path `d` for EL.line, and draws only what faces the camera)

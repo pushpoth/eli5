@@ -27,6 +27,10 @@ const aabb = (s) => {
     const ps = s.prof, R = Math.max(...ps.map((p) => p[1])), ys = ps.map((p) => p[0]);
     return [s.cx - R, Math.min(...ys), s.cz - R, s.cx + R, Math.max(...ys), s.cz + R];
   }
+  if (s.kind === "turnX") {
+    const ps = s.prof, R = Math.max(...ps.map((p) => p[1])), xs = ps.map((p) => p[0]);
+    return [Math.min(...xs), s.cy - R, s.cz - R, Math.max(...xs), s.cy + R, s.cz + R];
+  }
   return [0, 0, 0, 0, 0, 0];
 };
 const xyOverlap = (a, b, tol) => a[0] < b[3] + tol && b[0] < a[3] + tol && a[1] < b[4] + tol && b[1] < a[4] + tol;
@@ -40,6 +44,8 @@ function samplePoints(s) {
     const R = s.kind === "cyl" ? s.r : Math.max(...s.prof.map((p) => p[1]));
     const cx = s.kind === "cyl" ? s.cx : 0, cy = s.kind === "cyl" ? s.cy : 0;
     for (let k = 0; k < 12; k++) { const a = (k * Math.PI) / 6; for (const z of [z0, z1]) pts.push([cx + Math.cos(a) * R, cy + Math.sin(a) * R, z]); }
+  } else if (s.kind === "turnX") {
+    for (const [x, r] of s.prof) for (let k = 0; k < 12; k++) { const a = (k * Math.PI) / 6; pts.push([x, s.cy + Math.cos(a) * r, s.cz + Math.sin(a) * r]); }
   } else if (s.kind === "turnY") {
     for (const [y, r] of s.prof) for (let k = 0; k < 12; k++) { const a = (k * Math.PI) / 6; pts.push([s.cx + Math.cos(a) * r, y, s.cz + Math.sin(a) * r]); }
   } else if (s.kind === "ringY") {

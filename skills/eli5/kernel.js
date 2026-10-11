@@ -1,4 +1,4 @@
-/* eli5 kernel sha256:4d96108b8f1411e47329fcae04c983085eb7f0c4f0df529ca2f01289e02c5f45 */
+/* eli5 kernel sha256:1478371f2fa02d1ffb8ba85145765768cb5308efb8f3c152584ece43c72a6a46 */
 /*
  * EL: everything a figure may call. Read this index; the code under it is the
  * engine, and a figure never edits it. A change to the engine is a change to
@@ -25,6 +25,7 @@
  *   cylinder(cx, cy, r, z0, z1, P, front, steps?)       a round post, puck, foot or boss
  *   lathe(prof, P, front, opts?)                        a surface of revolution about z from a meridian [[z, r], …]; convex only
  *   latheY(prof, cx, cz, P, opts?)                      the same about the y axis: a lens barrel, a drum, a roller
+ *   latheX(prof, cy, cz, P, opts?)                      the same about the x axis: a platen roller, a spool, an axle
  *   ringY(rIn, rOut, y, cx, cz, P, opts?)               a flat ring on the plane at y (evenodd): a lens mount with a bore
  *   prism(P, front, ring, inner, z0, z1)                the three path strings of any ring pair, on screen
  * Parts (each returns a path `d` for EL.line, and draws only what faces the camera)
@@ -254,6 +255,18 @@ function latheY(prof, cx, cz, P, { steps = 40 } = {}) {
   const sil = poly(hull(prof.flatMap(([y, r]) => ring(r, y))));
   const [fy, fr] = prof[prof.length - 1];
   return { paths: { sil, top: poly(ring(fr, fy)), crease: open(ring(Math.max(0.3, fr - 1.2), fy)) }, shape: { kind: "turnY", prof, cx, cz, steps } };
+}
+
+/** A surface of revolution about the x axis from a meridian of `[x, r]`: a platen roller, a spool, an axle. */
+function latheX(prof, cy, cz, P, { steps = 40 } = {}) {
+  const ring = (r, x) => {
+    const pts = [];
+    for (let i = 0; i < steps; i++) { const a = (i / steps) * 2 * Math.PI; pts.push(P(x, cy + Math.cos(a) * r, cz + Math.sin(a) * r)); }
+    return pts;
+  };
+  const sil = poly(hull(prof.flatMap(([x, r]) => ring(r, x))));
+  const [fx, fr] = prof[prof.length - 1];
+  return { paths: { sil, top: poly(ring(fr, fx)), crease: open(ring(Math.max(0.3, fr - 1.2), fx)) }, shape: { kind: "turnX", prof, cy, cz, steps } };
 }
 
 /**
@@ -709,6 +722,10 @@ const aabb = (s) => {
     const ps = s.prof, R = Math.max(...ps.map((p) => p[1])), ys = ps.map((p) => p[0]);
     return [s.cx - R, Math.min(...ys), s.cz - R, s.cx + R, Math.max(...ys), s.cz + R];
   }
+  if (s.kind === "turnX") {
+    const ps = s.prof, R = Math.max(...ps.map((p) => p[1])), xs = ps.map((p) => p[0]);
+    return [Math.min(...xs), s.cy - R, s.cz - R, Math.max(...xs), s.cy + R, s.cz + R];
+  }
   return [0, 0, 0, 0, 0, 0];
 };
 const xyOverlap = (a, b, tol) => a[0] < b[3] + tol && b[0] < a[3] + tol && a[1] < b[4] + tol && b[1] < a[4] + tol;
@@ -722,6 +739,8 @@ function samplePoints(s) {
     const R = s.kind === "cyl" ? s.r : Math.max(...s.prof.map((p) => p[1]));
     const cx = s.kind === "cyl" ? s.cx : 0, cy = s.kind === "cyl" ? s.cy : 0;
     for (let k = 0; k < 12; k++) { const a = (k * Math.PI) / 6; for (const z of [z0, z1]) pts.push([cx + Math.cos(a) * R, cy + Math.sin(a) * R, z]); }
+  } else if (s.kind === "turnX") {
+    for (const [x, r] of s.prof) for (let k = 0; k < 12; k++) { const a = (k * Math.PI) / 6; pts.push([x, s.cy + Math.cos(a) * r, s.cz + Math.sin(a) * r]); }
   } else if (s.kind === "turnY") {
     for (const [y, r] of s.prof) for (let k = 0; k < 12; k++) { const a = (k * Math.PI) / 6; pts.push([s.cx + Math.cos(a) * r, y, s.cz + Math.sin(a) * r]); }
   } else if (s.kind === "ringY") {
@@ -796,6 +815,6 @@ function audit(options = {}) {
 
   return { ok: failures === 0, lines, failures, items: A.length };
 }
-return { cam, proj, unproj, fit, frame, facing, viewOf, rrect, circ, circAt, ringAt, run, hull, poly, open, seg, clamp, lerp, rad, r2, prism, slab, cylinder, lathe, latheY, ringY, knurl, sideArc, sideSeam, boltRing, spring, stepS, tween, tset, tval, tdone, EASE, reducedMotion, setReducedMotion, mk, solid, put, draw, line, dot, place, group, setRecording, register, advance, pointer, disposer, audit, css, inject, tour, LAP };
+return { cam, proj, unproj, fit, frame, facing, viewOf, rrect, circ, circAt, ringAt, run, hull, poly, open, seg, clamp, lerp, rad, r2, prism, slab, cylinder, lathe, latheX, latheY, ringY, knurl, sideArc, sideSeam, boltRing, spring, stepS, tween, tset, tval, tdone, EASE, reducedMotion, setReducedMotion, mk, solid, put, draw, line, dot, place, group, setRecording, register, advance, pointer, disposer, audit, css, inject, tour, LAP };
 })();
 export { EL };

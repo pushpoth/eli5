@@ -1,0 +1,10 @@
+{
+  "figure": "typewriter.js",
+  "parts": [
+    { "name": "frame", "shows": ["a slab base", "a keyboard of round keys"], "verdict": "yes", "note": "read from assets/look.png" },
+    { "name": "post", "shows": ["a pillar under each end of the platen"], "verdict": "yes", "note": "" },
+    { "name": "platen", "shows": ["a roller across the frame", "rounded ends"], "verdict": "yes", "note": "" },
+    { "name": "paper", "shows": ["a sheet over the platen"], "verdict": "yes", "note": "" },
+    { "name": "typebar", "shows": ["a fan of bars in the basket", "the one in play lifting to the platen"], "verdict": "yes", "note": "" }
+  ]
+}
