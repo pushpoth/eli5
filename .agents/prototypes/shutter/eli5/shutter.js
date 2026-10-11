@@ -22,10 +22,14 @@ function mount({ stage, svg, read }, value) {
 
   // the body, and the top plate with the wind lever and the shutter button
   EL.draw(EL.solid(g), EL.slab(-BW, -20, BW, BY, 5, 0, BH, P, front, { inset: 2.2 }), { name: "body", at: [0, -2, BH / 2] });
+  EL.line(g, EL.sideSeam(-BW, -20, BW, BY, 5, BH - 6, P, front, 5), "el-lo");
+  EL.line(g, EL.sideSeam(-BW, -20, BW, BY, 5, 4, P, front, 5), "el-lo");
   EL.draw(EL.solid(g), EL.slab(-BW + 2, -18, BW - 2, BY - 2, 4, BH, BH + 4, P, front, { inset: 1.4 }), { name: "top", at: [0, -2, BH + 2] });
   EL.draw(EL.solid(g), EL.slab(-9, -17, 9, 1, 2, BH + 4, BH + 13, P, front, { inset: 1 }), { name: "prism", at: [0, -8, BH + 8] });
   EL.draw(EL.solid(g), EL.cylinder(23, 4, 3.2, BH + 4, BH + 8, P, front, 24), { name: "release", at: [23, 4, BH + 6] });
+  EL.line(g, EL.knurl(23, 4, 3.2, BH + 4, BH + 8, 14, P, front), "el-lo");
   EL.draw(EL.solid(g), EL.cylinder(-26, 2, 4.6, BH + 4, BH + 10, P, front, 28), { name: "rewind", at: [-26, 2, BH + 7] });
+  EL.line(g, EL.knurl(-26, 2, 4.6, BH + 4, BH + 10, 22, P, front), "el-lo");
   EL.draw(EL.solid(g), EL.cylinder(-23, -14, 2, BH + 4, BH + 6, P, front, 16), { name: "lever.pivot", at: [-23, -14, BH + 5] });
   EL.draw(EL.solid(g), EL.slab(-33, -16, -19, -12, 1, BH + 6, BH + 7, P, front, { inset: 0.4 }), { name: "lever", at: [-26, -14, BH + 6.5] });
 

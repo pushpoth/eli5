@@ -1,4 +1,4 @@
-/* eli5 kernel sha256:d9b65b0c4b7ea9048caa3876cc29dcb33e9a0853cad7b442dbfa5e4436b4009c */
+/* eli5 kernel sha256:b70cc99d30cc201a1a07a36647fb07e49771c8db85ab2acd0163a143baea072e */
 /*
  * EL: everything a figure may call. Read this index; the code under it is the
  * engine, and a figure never edits it. A change to the engine is a change to
@@ -23,7 +23,12 @@
  *   slab(x0, y0, x1, y1, r, z0, z1, P, front, opts?)    a rounded box; opts { inset, steps }
  *   cylinder(cx, cy, r, z0, z1, P, front, steps?)       a round post, puck, foot or boss
  *   lathe(prof, P, front, opts?)                        a surface of revolution about z from a meridian [[z, r], …]; convex only
- *   prism(P, front, ring, inner, z0, z1)                the two path strings of any ring pair
+ *   prism(P, front, ring, inner, z0, z1)                the three path strings of any ring pair, on screen
+ * Parts (each returns a path `d` for EL.line, and draws only what faces the camera)
+ *   knurl(cx, cy, r, z0, z1, n, P, front)   vertical knurl lines on a knob or thumb screw
+ *   sideArc(cx, cy, r, z, P, front)         the visible run of a horizontal circle on a cylinder: a seam or band
+ *   sideSeam(x0, y0, x1, y1, r, z, P, front)  the visible run of a rounded plan on a box: a weld or trim line
+ *   boltRing(cx, cy, r, n, z, P, front)     screen points of a bolt circle, for EL.dot
  *   rrect(u0, v0, u1, v1, r, n?)  circ(R, n?)  circAt(cx, cy, R, n?)   ringAt(P, ring, z)   run(ring, keep)   hull(points)
  * Paths and numbers
  *   poly(points)  open(points)  seg(a, b)  clamp(v, a, b)  lerp(a, b, t)  rad(deg)  r2(n)
@@ -227,6 +232,48 @@ function lathe(prof, P, front, { steps = 48 } = {}) {
   const top = tr > 0.6 ? poly(ringAt(P, circ(tr, steps), tz)) : "";
   const crease = open(ringAt(P, run(circ(Math.max(0.3, tr - 1.1), steps), front), tz));
   return { paths: { sil, top, crease }, shape: { kind: "turn", prof, steps } };
+}
+
+/**
+ * eli5 · parts — a small library of the details that make a machine read: the
+ * knurl on a knob, a seam or band around a body, a bolt ring. Each returns a
+ * path `d` for `line`, and each draws only what faces the camera, so a figure
+ * does not have to work out visibility. These are the details a real object
+ * really has; a machine without them is a row of blocks.
+ */
+
+
+/** Vertical knurl lines on the visible half of a cylinder: a knob or a thumb screw. */
+function knurl(cx, cy, r, z0, z1, n, P, front, out = 0.15) {
+  let d = "";
+  for (let i = 0; i < n; i++) {
+    const a = (i / n) * 2 * Math.PI, ca = Math.cos(a), sa = Math.sin(a);
+    if (!front({ nu: ca, nv: sa })) continue;
+    d += seg(P(cx + ca * (r + out), cy + sa * (r + out), z0), P(cx + ca * (r + out), cy + sa * (r + out), z1));
+  }
+  return d;
+}
+
+/** The visible front run of a horizontal circle on a cylinder: a seam, band or bevel line. */
+function sideArc(cx, cy, r, z, P, front, n = 40) {
+  const ring = circ(r, n).map((q) => ({ u: cx + q.u, v: cy + q.v, nu: q.nu, nv: q.nv }));
+  return open(ringAt(P, run(ring, front), z));
+}
+
+/** The visible near run of a rounded plan at height z: a seam or weld line on a box, wrapping its corners. */
+function sideSeam(x0, y0, x1, y1, r, z, P, front, steps = 4) {
+  return open(ringAt(P, run(rrect(x0, y0, x1, y1, r, steps), front), z));
+}
+
+/** Screen points of a bolt circle on a face at height z, for `dot`. */
+function boltRing(cx, cy, r, count, z, P, front, phase = 0) {
+  const out = [];
+  for (let i = 0; i < count; i++) {
+    const a = phase + (i / count) * 2 * Math.PI, ca = Math.cos(a), sa = Math.sin(a);
+    if (!front({ nu: ca, nv: sa })) continue;
+    out.push(P(cx + ca * r, cy + sa * r, z));
+  }
+  return out;
 }
 
 /**
@@ -690,6 +737,6 @@ function audit(options = {}) {
 
   return { ok: failures === 0, lines, failures, items: A.length };
 }
-return { cam, proj, unproj, fit, facing, viewOf, rrect, circ, circAt, ringAt, run, hull, poly, open, seg, clamp, lerp, rad, r2, prism, slab, cylinder, lathe, spring, stepS, tween, tset, tval, tdone, EASE, reducedMotion, setReducedMotion, mk, solid, put, draw, line, dot, place, group, setRecording, register, advance, pointer, disposer, audit, css, inject, tour, LAP };
+return { cam, proj, unproj, fit, facing, viewOf, rrect, circ, circAt, ringAt, run, hull, poly, open, seg, clamp, lerp, rad, r2, prism, slab, cylinder, lathe, knurl, sideArc, sideSeam, boltRing, spring, stepS, tween, tset, tval, tdone, EASE, reducedMotion, setReducedMotion, mk, solid, put, draw, line, dot, place, group, setRecording, register, advance, pointer, disposer, audit, css, inject, tour, LAP };
 })();
 export { EL };

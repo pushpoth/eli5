@@ -22,7 +22,12 @@
  *   slab(x0, y0, x1, y1, r, z0, z1, P, front, opts?)    a rounded box; opts { inset, steps }
  *   cylinder(cx, cy, r, z0, z1, P, front, steps?)       a round post, puck, foot or boss
  *   lathe(prof, P, front, opts?)                        a surface of revolution about z from a meridian [[z, r], …]; convex only
- *   prism(P, front, ring, inner, z0, z1)                the two path strings of any ring pair
+ *   prism(P, front, ring, inner, z0, z1)                the three path strings of any ring pair, on screen
+ * Parts (each returns a path `d` for EL.line, and draws only what faces the camera)
+ *   knurl(cx, cy, r, z0, z1, n, P, front)   vertical knurl lines on a knob or thumb screw
+ *   sideArc(cx, cy, r, z, P, front)         the visible run of a horizontal circle on a cylinder: a seam or band
+ *   sideSeam(x0, y0, x1, y1, r, z, P, front)  the visible run of a rounded plan on a box: a weld or trim line
+ *   boltRing(cx, cy, r, n, z, P, front)     screen points of a bolt circle, for EL.dot
  *   rrect(u0, v0, u1, v1, r, n?)  circ(R, n?)  circAt(cx, cy, R, n?)   ringAt(P, ring, z)   run(ring, keep)   hull(points)
  * Paths and numbers
  *   poly(points)  open(points)  seg(a, b)  clamp(v, a, b)  lerp(a, b, t)  rad(deg)  r2(n)
