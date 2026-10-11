@@ -43,7 +43,7 @@
 </div>
 <script type="module">
 
-/* eli5 kernel sha256:b70cc99d30cc201a1a07a36647fb07e49771c8db85ab2acd0163a143baea072e */
+/* eli5 kernel sha256:6a705513cd5edb28821c73ffcfa7848528e342721f3101836e8c9a581871f0d6 */
 /*
  * EL: everything a figure may call. Read this index; the code under it is the
  * engine, and a figure never edits it. A change to the engine is a change to
@@ -58,8 +58,9 @@
  *
  * Camera
  *   cam(azDeg, k, S)          a camera: azimuth in degrees, k = sin(elevation) (0.5 is the 2:1 view), S = scale
- *   fit(C, points, cx, cy)    centres the box of [x, y, z] points on (cx, cy); call once, before proj
- *                             it only centres, it never scales: choose S by trying values, with the most extreme pose in points
+ *   frame(C, points, opts?)   centres the box of [x, y, z] points on (cx, cy) and scales it to fill `fill` of the viewBox
+ *                             opts { cx = 200, cy = 166, fill = 0.8 }: a lone object should sit centred and fill most of the canvas
+ *   fit(C, points, cx, cy)    centres only, and never scales; use `frame` unless the camera is the concept
  *   proj(C)                   returns P(x, y, z) -> [sx, sy]
  *   unproj(C, sx, sy, z)      the world [x, y] under a screen point, on the plane at height z
  *   facing(C)                 returns front(sample): whether a ring sample faces the camera
@@ -168,6 +169,24 @@ function fit(C, pts, cx, cy) {
     a = Math.min(a, q[0]); b = Math.max(b, q[0]); c = Math.min(c, q[1]); d = Math.max(d, q[1]);
   }
   C.ox = cx - (a + b) / 2; C.oy = cy - (c + d) / 2;
+}
+
+/**
+ * Sets the camera's scale and offset so the box of `pts` is centred on (cx, cy)
+ * and fills `fill` of the viewBox (0.8 = 80%). This is `fit` with a size: a lone
+ * object should sit centred and fill most of the canvas.
+ */
+function frame(C, pts, { cx = 200, cy = 166, fill = 0.8 } = {}) {
+  C.ox = 0; C.oy = 0; C.S = 1;
+  const measure = (P) => {
+    let x0 = 1e9, x1 = -1e9, y0 = 1e9, y1 = -1e9;
+    for (const p of pts) { const q = P(p[0], p[1], p[2]); x0 = Math.min(x0, q[0]); x1 = Math.max(x1, q[0]); y0 = Math.min(y0, q[1]); y1 = Math.max(y1, q[1]); }
+    return [x0, x1, y0, y1];
+  };
+  const [x0, x1, y0, y1] = measure(proj(C));
+  C.S = Math.min((fill * 400) / Math.max(1, x1 - x0), (fill * 320) / Math.max(1, y1 - y0));
+  const [a0, a1, b0, b1] = measure(proj(C));
+  C.ox = cx - (a0 + a1) / 2; C.oy = cy - (b0 + b1) / 2;
 }
 
 /** The samples whose normal faces the camera: the world direction of screen-down is (sin az, cos az). */
@@ -289,10 +308,10 @@ function lathe(prof, P, front, { steps = 48 } = {}) {
 
 
 /** Vertical knurl lines on the visible half of a cylinder: a knob or a thumb screw. */
-function knurl(cx, cy, r, z0, z1, n, P, front, out = 0.15) {
+function knurl(cx, cy, r, z0, z1, n, P, front, out = 0.15, phase = 0) {
   let d = "";
   for (let i = 0; i < n; i++) {
-    const a = (i / n) * 2 * Math.PI, ca = Math.cos(a), sa = Math.sin(a);
+    const a = phase + (i / n) * 2 * Math.PI, ca = Math.cos(a), sa = Math.sin(a);
     if (!front({ nu: ca, nv: sa })) continue;
     d += seg(P(cx + ca * (r + out), cy + sa * (r + out), z0), P(cx + ca * (r + out), cy + sa * (r + out), z1));
   }
@@ -461,7 +480,7 @@ let boards = [];
 let raf = 0, last = 0;
 let io = null, rm = null;
 
-function frame(now) {
+function loopFrame(now) {
   const dt = Math.min(0.05, Math.max(0, (now - last) / 1000));
   last = now;
   let any = false;
@@ -469,10 +488,10 @@ function frame(now) {
     try { b.awake = !!b.tick(dt, now); } catch (err) { b.awake = false; setTimeout(() => { throw err; }); }
     any = any || b.awake;
   }
-  raf = any ? requestAnimationFrame(frame) : 0;
+  raf = any ? requestAnimationFrame(loopFrame) : 0;
 }
 
-function wake(b) { b.awake = true; if (!raf) { last = performance.now(); raf = requestAnimationFrame(frame); } }
+function wake(b) { b.awake = true; if (!raf) { last = performance.now(); raf = requestAnimationFrame(loopFrame); } }
 
 const onMotion = () => { setReducedMotion(!!rm?.matches); boards.forEach(wake); };
 
@@ -782,7 +801,7 @@ function audit(options = {}) {
 
   return { ok: failures === 0, lines, failures, items: A.length };
 }
-return { cam, proj, unproj, fit, facing, viewOf, rrect, circ, circAt, ringAt, run, hull, poly, open, seg, clamp, lerp, rad, r2, prism, slab, cylinder, lathe, knurl, sideArc, sideSeam, boltRing, spring, stepS, tween, tset, tval, tdone, EASE, reducedMotion, setReducedMotion, mk, solid, put, draw, line, dot, place, group, setRecording, register, advance, pointer, disposer, audit, css, inject, tour, LAP };
+return { cam, proj, unproj, fit, frame, facing, viewOf, rrect, circ, circAt, ringAt, run, hull, poly, open, seg, clamp, lerp, rad, r2, prism, slab, cylinder, lathe, knurl, sideArc, sideSeam, boltRing, spring, stepS, tween, tset, tval, tdone, EASE, reducedMotion, setReducedMotion, mk, solid, put, draw, line, dot, place, group, setRecording, register, advance, pointer, disposer, audit, css, inject, tour, LAP };
 })();
 
 
@@ -842,6 +861,8 @@ function figure(spec) {
   });
 
   if (params.get("w")) document.documentElement.style.setProperty("--w", params.get("w") + "px");
+  const cover = () => { try { const b = svg.getBBox(); stage.setAttribute("data-cover", `${Math.round((b.width / 400) * 100)}x${Math.round((b.height / 320) * 100)}`); } catch { /* no layout yet */ } };
+  setTimeout(cover, 80);
   const atPointer = (x, y) => {
     const r = svg.getBoundingClientRect();
     stage.dispatchEvent(new PointerEvent("pointermove", { clientX: r.left + (x / 400) * r.width, clientY: r.top + (y / 320) * r.height, bubbles: true }));
@@ -857,6 +878,7 @@ function figure(spec) {
       run(120);
       if (at) { const [x, y] = at.split(",").map(Number); atPointer(x, y); run(240); }
       if (params.get("play") === "1") run(600);
+      cover();
     }, 50);
   } else if (at) {
     requestAnimationFrame(() => atPointer(...at.split(",").map(Number)));
@@ -881,8 +903,11 @@ const speed = (s) => STOPS.reduce((a, b) => (Math.abs(b[0] - s) < Math.abs(a[0] 
 
 function mount({ stage, svg, read }, value) {
   const bag = EL.disposer();
-  const C = EL.cam(45, 0.5, 1.5);
-  EL.fit(C, [[-BW - 6, -22, -6], [BW + 6, -22, -6], [BW + 6, -22, BH + 18], [-BW - 6, -22, BH + 18], [BW + 10, 16, 4]], 200, 174);
+  const C = EL.cam(45, 0.5, 1);
+  EL.frame(C, [
+    [-BW, -20, 0], [BW, -20, 0], [BW, BY, 0], [-BW, BY, 0],
+    [-BW, -20, BH + 13], [BW, -20, BH + 13], [BW, BY, BH + 13], [-BW, BY, BH + 13],
+  ], { fill: 0.85 });
   const P = EL.proj(C), front = EL.facing(C);
   const g = EL.mk("g", {}, svg);
   /** A circle drawn on the vertical front face (the x–z plane at y). */
@@ -897,7 +922,7 @@ function mount({ stage, svg, read }, value) {
   EL.draw(EL.solid(g), EL.cylinder(23, 4, 3.2, BH + 4, BH + 8, P, front, 24), { name: "release", at: [23, 4, BH + 6] });
   EL.line(g, EL.knurl(23, 4, 3.2, BH + 4, BH + 8, 14, P, front), "el-lo");
   EL.draw(EL.solid(g), EL.cylinder(-26, 2, 4.6, BH + 4, BH + 10, P, front, 28), { name: "rewind", at: [-26, 2, BH + 7] });
-  EL.line(g, EL.knurl(-26, 2, 4.6, BH + 4, BH + 10, 22, P, front), "el-lo");
+  const knobK = EL.line(g, "", "el-lo"), knobI = EL.line(g, "", "el-lo");   // the knob turns with the shutter
   EL.draw(EL.solid(g), EL.cylinder(-23, -14, 2, BH + 4, BH + 6, P, front, 16), { name: "lever.pivot", at: [-23, -14, BH + 5] });
   EL.draw(EL.solid(g), EL.slab(-33, -16, -19, -12, 1, BH + 6, BH + 7, P, front, { inset: 0.4 }), { name: "lever", at: [-26, -14, BH + 6.5] });
 
@@ -920,6 +945,10 @@ function mount({ stage, svg, read }, value) {
     for (let z = zb - 3; z > LZ - GAP + 1; z -= 3) d += EL.seg(P(LX - GAP + 2, BY + 0.66, z), P(LX + GAP - 2, BY + 0.66, z));
     slats.innerHTML = `<path class="el-lo" d="${d}"/>`;
     slit.setAttribute("d", EL.seg(P(LX - GAP + 2, BY + 0.72, LZ), P(LX + GAP - 2, BY + 0.72, LZ)));
+    // the knob turns as the shutter opens, so the control answers the mechanism
+    const ph = s * 0.14;
+    knobK.setAttribute("d", EL.knurl(-26, 2, 4.6, BH + 4, BH + 10, 22, P, front, 0.15, ph));
+    knobI.setAttribute("d", EL.seg(P(-26, 2, BH + 10.1), P(-26 + Math.cos(ph) * 4.2, 2 + Math.sin(ph) * 4.2, BH + 10.1)));
     read.textContent = over ? `1/${speed(s)} s` : "rest";
   };
 
@@ -949,7 +978,7 @@ figure({
   parts: [
     { name: "body", shows: ["a rounded slab", "a top plate with a wind lever and a shutter button"] },
     { name: "lens", shows: ["concentric rings", "a glass at the centre"] },
-    { name: "curtain", shows: ["horizontal slats", "an edge wound on its drum"] },
+    { name: "curtain", shows: ["horizontal slats", "an opaque edge at the slit"] },
     { name: "slit", shows: ["the light between the two curtains"] },
   ],
   mount,

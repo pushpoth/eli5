@@ -13,8 +13,11 @@ const speed = (s) => STOPS.reduce((a, b) => (Math.abs(b[0] - s) < Math.abs(a[0] 
 
 function mount({ stage, svg, read }, value) {
   const bag = EL.disposer();
-  const C = EL.cam(45, 0.5, 1.5);
-  EL.fit(C, [[-BW - 6, -22, -6], [BW + 6, -22, -6], [BW + 6, -22, BH + 18], [-BW - 6, -22, BH + 18], [BW + 10, 16, 4]], 200, 174);
+  const C = EL.cam(45, 0.5, 1);
+  EL.frame(C, [
+    [-BW, -20, 0], [BW, -20, 0], [BW, BY, 0], [-BW, BY, 0],
+    [-BW, -20, BH + 13], [BW, -20, BH + 13], [BW, BY, BH + 13], [-BW, BY, BH + 13],
+  ], { fill: 0.85 });
   const P = EL.proj(C), front = EL.facing(C);
   const g = EL.mk("g", {}, svg);
   /** A circle drawn on the vertical front face (the x–z plane at y). */
@@ -29,7 +32,7 @@ function mount({ stage, svg, read }, value) {
   EL.draw(EL.solid(g), EL.cylinder(23, 4, 3.2, BH + 4, BH + 8, P, front, 24), { name: "release", at: [23, 4, BH + 6] });
   EL.line(g, EL.knurl(23, 4, 3.2, BH + 4, BH + 8, 14, P, front), "el-lo");
   EL.draw(EL.solid(g), EL.cylinder(-26, 2, 4.6, BH + 4, BH + 10, P, front, 28), { name: "rewind", at: [-26, 2, BH + 7] });
-  EL.line(g, EL.knurl(-26, 2, 4.6, BH + 4, BH + 10, 22, P, front), "el-lo");
+  const knobK = EL.line(g, "", "el-lo"), knobI = EL.line(g, "", "el-lo");   // the knob turns with the shutter
   EL.draw(EL.solid(g), EL.cylinder(-23, -14, 2, BH + 4, BH + 6, P, front, 16), { name: "lever.pivot", at: [-23, -14, BH + 5] });
   EL.draw(EL.solid(g), EL.slab(-33, -16, -19, -12, 1, BH + 6, BH + 7, P, front, { inset: 0.4 }), { name: "lever", at: [-26, -14, BH + 6.5] });
 
@@ -52,6 +55,10 @@ function mount({ stage, svg, read }, value) {
     for (let z = zb - 3; z > LZ - GAP + 1; z -= 3) d += EL.seg(P(LX - GAP + 2, BY + 0.66, z), P(LX + GAP - 2, BY + 0.66, z));
     slats.innerHTML = `<path class="el-lo" d="${d}"/>`;
     slit.setAttribute("d", EL.seg(P(LX - GAP + 2, BY + 0.72, LZ), P(LX + GAP - 2, BY + 0.72, LZ)));
+    // the knob turns as the shutter opens, so the control answers the mechanism
+    const ph = s * 0.14;
+    knobK.setAttribute("d", EL.knurl(-26, 2, 4.6, BH + 4, BH + 10, 22, P, front, 0.15, ph));
+    knobI.setAttribute("d", EL.seg(P(-26, 2, BH + 10.1), P(-26 + Math.cos(ph) * 4.2, 2 + Math.sin(ph) * 4.2, BH + 10.1)));
     read.textContent = over ? `1/${speed(s)} s` : "rest";
   };
 

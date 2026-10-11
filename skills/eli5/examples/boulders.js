@@ -7,8 +7,8 @@
  */
 function mount({ stage, svg }, value) {
   const bag = EL.disposer();
-  const C = EL.cam(45, 0.5, 1.5);
-  EL.fit(C, [[-42, -42, 0], [42, 42, 0], [-42, 42, 0], [42, -42, 0], [0, 0, 8]], 200, 166);
+  const C = EL.cam(45, 0.5, 1);
+  EL.frame(C, [[-42, -42, 0], [42, 42, 0], [-42, 42, 0], [42, -42, 0], [0, 0, 8]], { fill: 0.85 });
   const P = EL.proj(C), front = EL.facing(C), g = EL.mk("g", {}, svg);
   EL.draw(EL.solid(g), EL.slab(-42, -42, 42, 42, 8, -6, 0, P, front, { inset: 1.6 }), { name: "ground", at: [0, 0, -3] });
   for (const [x, y] of [[-20, 8], [18, 12], [4, -18]]) {

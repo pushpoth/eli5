@@ -100,6 +100,8 @@ function figure(spec) {
   });
 
   if (params.get("w")) document.documentElement.style.setProperty("--w", params.get("w") + "px");
+  const cover = () => { try { const b = svg.getBBox(); stage.setAttribute("data-cover", `${Math.round((b.width / 400) * 100)}x${Math.round((b.height / 320) * 100)}`); } catch { /* no layout yet */ } };
+  setTimeout(cover, 80);
   const atPointer = (x, y) => {
     const r = svg.getBoundingClientRect();
     stage.dispatchEvent(new PointerEvent("pointermove", { clientX: r.left + (x / 400) * r.width, clientY: r.top + (y / 320) * r.height, bubbles: true }));
@@ -115,6 +117,7 @@ function figure(spec) {
       run(120);
       if (at) { const [x, y] = at.split(",").map(Number); atPointer(x, y); run(240); }
       if (params.get("play") === "1") run(600);
+      cover();
     }, 50);
   } else if (at) {
     requestAnimationFrame(() => atPointer(...at.split(",").map(Number)));

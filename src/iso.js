@@ -64,6 +64,24 @@ export function fit(C, pts, cx, cy) {
   C.ox = cx - (a + b) / 2; C.oy = cy - (c + d) / 2;
 }
 
+/**
+ * Sets the camera's scale and offset so the box of `pts` is centred on (cx, cy)
+ * and fills `fill` of the viewBox (0.8 = 80%). This is `fit` with a size: a lone
+ * object should sit centred and fill most of the canvas.
+ */
+export function frame(C, pts, { cx = 200, cy = 166, fill = 0.8 } = {}) {
+  C.ox = 0; C.oy = 0; C.S = 1;
+  const measure = (P) => {
+    let x0 = 1e9, x1 = -1e9, y0 = 1e9, y1 = -1e9;
+    for (const p of pts) { const q = P(p[0], p[1], p[2]); x0 = Math.min(x0, q[0]); x1 = Math.max(x1, q[0]); y0 = Math.min(y0, q[1]); y1 = Math.max(y1, q[1]); }
+    return [x0, x1, y0, y1];
+  };
+  const [x0, x1, y0, y1] = measure(proj(C));
+  C.S = Math.min((fill * 400) / Math.max(1, x1 - x0), (fill * 320) / Math.max(1, y1 - y0));
+  const [a0, a1, b0, b1] = measure(proj(C));
+  C.ox = cx - (a0 + a1) / 2; C.oy = cy - (b0 + b1) / 2;
+}
+
 /** The samples whose normal faces the camera: the world direction of screen-down is (sin az, cos az). */
 export const facing = (C) => {
   const s = Math.sin(C.az), c = Math.cos(C.az);

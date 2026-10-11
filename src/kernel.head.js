@@ -12,8 +12,9 @@
  *
  * Camera
  *   cam(azDeg, k, S)          a camera: azimuth in degrees, k = sin(elevation) (0.5 is the 2:1 view), S = scale
- *   fit(C, points, cx, cy)    centres the box of [x, y, z] points on (cx, cy); call once, before proj
- *                             it only centres, it never scales: choose S by trying values, with the most extreme pose in points
+ *   frame(C, points, opts?)   centres the box of [x, y, z] points on (cx, cy) and scales it to fill `fill` of the viewBox
+ *                             opts { cx = 200, cy = 166, fill = 0.8 }: a lone object should sit centred and fill most of the canvas
+ *   fit(C, points, cx, cy)    centres only, and never scales; use `frame` unless the camera is the concept
  *   proj(C)                   returns P(x, y, z) -> [sx, sy]
  *   unproj(C, sx, sy, z)      the world [x, y] under a screen point, on the plane at height z
  *   facing(C)                 returns front(sample): whether a ring sample faces the camera

@@ -1,4 +1,4 @@
-/* eli5 kernel sha256:b70cc99d30cc201a1a07a36647fb07e49771c8db85ab2acd0163a143baea072e */
+/* eli5 kernel sha256:6a705513cd5edb28821c73ffcfa7848528e342721f3101836e8c9a581871f0d6 */
 /*
  * EL: everything a figure may call. Read this index; the code under it is the
  * engine, and a figure never edits it. A change to the engine is a change to
@@ -13,8 +13,9 @@
  *
  * Camera
  *   cam(azDeg, k, S)          a camera: azimuth in degrees, k = sin(elevation) (0.5 is the 2:1 view), S = scale
- *   fit(C, points, cx, cy)    centres the box of [x, y, z] points on (cx, cy); call once, before proj
- *                             it only centres, it never scales: choose S by trying values, with the most extreme pose in points
+ *   frame(C, points, opts?)   centres the box of [x, y, z] points on (cx, cy) and scales it to fill `fill` of the viewBox
+ *                             opts { cx = 200, cy = 166, fill = 0.8 }: a lone object should sit centred and fill most of the canvas
+ *   fit(C, points, cx, cy)    centres only, and never scales; use `frame` unless the camera is the concept
  *   proj(C)                   returns P(x, y, z) -> [sx, sy]
  *   unproj(C, sx, sy, z)      the world [x, y] under a screen point, on the plane at height z
  *   facing(C)                 returns front(sample): whether a ring sample faces the camera
@@ -123,6 +124,24 @@ function fit(C, pts, cx, cy) {
     a = Math.min(a, q[0]); b = Math.max(b, q[0]); c = Math.min(c, q[1]); d = Math.max(d, q[1]);
   }
   C.ox = cx - (a + b) / 2; C.oy = cy - (c + d) / 2;
+}
+
+/**
+ * Sets the camera's scale and offset so the box of `pts` is centred on (cx, cy)
+ * and fills `fill` of the viewBox (0.8 = 80%). This is `fit` with a size: a lone
+ * object should sit centred and fill most of the canvas.
+ */
+function frame(C, pts, { cx = 200, cy = 166, fill = 0.8 } = {}) {
+  C.ox = 0; C.oy = 0; C.S = 1;
+  const measure = (P) => {
+    let x0 = 1e9, x1 = -1e9, y0 = 1e9, y1 = -1e9;
+    for (const p of pts) { const q = P(p[0], p[1], p[2]); x0 = Math.min(x0, q[0]); x1 = Math.max(x1, q[0]); y0 = Math.min(y0, q[1]); y1 = Math.max(y1, q[1]); }
+    return [x0, x1, y0, y1];
+  };
+  const [x0, x1, y0, y1] = measure(proj(C));
+  C.S = Math.min((fill * 400) / Math.max(1, x1 - x0), (fill * 320) / Math.max(1, y1 - y0));
+  const [a0, a1, b0, b1] = measure(proj(C));
+  C.ox = cx - (a0 + a1) / 2; C.oy = cy - (b0 + b1) / 2;
 }
 
 /** The samples whose normal faces the camera: the world direction of screen-down is (sin az, cos az). */
@@ -244,10 +263,10 @@ function lathe(prof, P, front, { steps = 48 } = {}) {
 
 
 /** Vertical knurl lines on the visible half of a cylinder: a knob or a thumb screw. */
-function knurl(cx, cy, r, z0, z1, n, P, front, out = 0.15) {
+function knurl(cx, cy, r, z0, z1, n, P, front, out = 0.15, phase = 0) {
   let d = "";
   for (let i = 0; i < n; i++) {
-    const a = (i / n) * 2 * Math.PI, ca = Math.cos(a), sa = Math.sin(a);
+    const a = phase + (i / n) * 2 * Math.PI, ca = Math.cos(a), sa = Math.sin(a);
     if (!front({ nu: ca, nv: sa })) continue;
     d += seg(P(cx + ca * (r + out), cy + sa * (r + out), z0), P(cx + ca * (r + out), cy + sa * (r + out), z1));
   }
@@ -416,7 +435,7 @@ let boards = [];
 let raf = 0, last = 0;
 let io = null, rm = null;
 
-function frame(now) {
+function loopFrame(now) {
   const dt = Math.min(0.05, Math.max(0, (now - last) / 1000));
   last = now;
   let any = false;
@@ -424,10 +443,10 @@ function frame(now) {
     try { b.awake = !!b.tick(dt, now); } catch (err) { b.awake = false; setTimeout(() => { throw err; }); }
     any = any || b.awake;
   }
-  raf = any ? requestAnimationFrame(frame) : 0;
+  raf = any ? requestAnimationFrame(loopFrame) : 0;
 }
 
-function wake(b) { b.awake = true; if (!raf) { last = performance.now(); raf = requestAnimationFrame(frame); } }
+function wake(b) { b.awake = true; if (!raf) { last = performance.now(); raf = requestAnimationFrame(loopFrame); } }
 
 const onMotion = () => { setReducedMotion(!!rm?.matches); boards.forEach(wake); };
 
@@ -737,6 +756,6 @@ function audit(options = {}) {
 
   return { ok: failures === 0, lines, failures, items: A.length };
 }
-return { cam, proj, unproj, fit, facing, viewOf, rrect, circ, circAt, ringAt, run, hull, poly, open, seg, clamp, lerp, rad, r2, prism, slab, cylinder, lathe, knurl, sideArc, sideSeam, boltRing, spring, stepS, tween, tset, tval, tdone, EASE, reducedMotion, setReducedMotion, mk, solid, put, draw, line, dot, place, group, setRecording, register, advance, pointer, disposer, audit, css, inject, tour, LAP };
+return { cam, proj, unproj, fit, frame, facing, viewOf, rrect, circ, circAt, ringAt, run, hull, poly, open, seg, clamp, lerp, rad, r2, prism, slab, cylinder, lathe, knurl, sideArc, sideSeam, boltRing, spring, stepS, tween, tset, tval, tdone, EASE, reducedMotion, setReducedMotion, mk, solid, put, draw, line, dot, place, group, setRecording, register, advance, pointer, disposer, audit, css, inject, tour, LAP };
 })();
 export { EL };

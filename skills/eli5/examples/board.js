@@ -8,10 +8,10 @@ const N = 5, CELL = 20, R = 5, HMAX = 34, EXT = N * CELL;
 
 function mount({ stage, svg, read }, value) {
   const bag = EL.disposer();
-  const C = EL.cam(45, 0.5, 1.35);
-  EL.fit(C, [
+  const C = EL.cam(45, 0.5, 1);
+  EL.frame(C, [
     [-8, -8, 0], [EXT + 8, EXT + 8, 0], [-8, EXT + 8, 0], [EXT + 8, -8, 0], [0, 0, HMAX + 4],
-  ], 200, 166);
+  ], { fill: 0.85 });
   const P = EL.proj(C), front = EL.facing(C);
   const g = EL.mk("g", {}, svg);
 

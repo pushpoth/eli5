@@ -17,14 +17,14 @@ const bearing = (dx, dy) => (Math.round((Math.atan2(dx, -dy) * 180) / Math.PI) +
 
 function mount({ stage, svg, read }, value) {
   const bag = EL.disposer();
-  const C = EL.cam(45, 0.5, 1.45);
+  const C = EL.cam(45, 0.5, 1);
   const ring = [];
   for (let i = 0; i < 12; i++) { const a = (i * Math.PI) / 6; ring.push([Math.cos(a) * MAXR, Math.sin(a) * MAXR, 0]); }
-  EL.fit(C, [
+  EL.frame(C, [
     [ROCK.x0 - 6, ROCK.y0 - 6, 0], [ROCK.x1 + 6, ROCK.y1 + 6, 0],
     [ROCK.x0 - 6, ROCK.y1 + 6, 0], [ROCK.x1 + 6, ROCK.y0 - 6, 0],
     ...ring, [0, 0, L1 + 12],
-  ], 200, 166);
+  ], { fill: 0.85 });
   const P = EL.proj(C), front = EL.facing(C);
   const g = EL.mk("g", {}, svg);
 

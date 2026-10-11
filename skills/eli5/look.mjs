@@ -31,9 +31,12 @@ function findChrome() {
     for (const p of [join(cache, d, "chrome-linux64", "chrome"), join(cache, d, "chrome-linux", "chrome")])if (existsSync(p)) return p;
   return null;
 }
-function dumpOut(chrome, url) {
+function dump(chrome, url) {
   const dom = execFileSync(chrome, ["--headless=new", "--disable-gpu", "--no-sandbox", "--virtual-time-budget=2500", "--dump-dom", url], { encoding: "utf8", maxBuffer: 64 * 1024 * 1024 });
-  return (/<p id="out">([\s\S]*?)<\/p>/.exec(dom)?.[1] ?? "?").trim();
+  return {
+    out: (/<p id="out">([\s\S]*?)<\/p>/.exec(dom)?.[1] ?? "?").trim(),
+    cover: /id="stage"[^>]*data-cover="([^"]*)"/.exec(dom)?.[1] ?? "",
+  };
 }
 
 if (!src || src.startsWith("-")) { console.error("usage: node look.mjs <figure.js> [--answer x,y] [--chrome <path>] [--out sheet.png]"); process.exit(2); }
@@ -78,10 +81,11 @@ writeFileSync(join(dir, "sheet.html"), sheet);
 console.log("read-outs:");
 let failed = false;
 for (const s of SHOTS) {
-  const out = dumpOut(chrome, url(s.q));
-  console.log(`  ${s.id.padEnd(12)} ${out}`);
+  const { out, cover } = dump(chrome, url(s.q));
+  console.log(`  ${s.id.padEnd(12)} ${out}${cover ? `   cover ${cover}%` : ""}`);
   if (s.id === "rest" && out !== "rest") { console.error(`  ✗ rest shot reads "${out}", not "rest"`); failed = true; }
   if (s.id === "answer" && answer && out === "rest") { console.error("  ✗ answer shot still reads rest: the --answer point misses the part"); failed = true; }
+  if (s.id === "rest" && cover && cover.split("x").some((n) => Number(n) < 40)) { console.error(`  ✗ rest fills only ${cover}% of the canvas; centre it and fill about 80% (frame)`); failed = true; }
 }
 
 const outPath = resolve(arg("--out") ?? `eli5-${name}-look.png`);

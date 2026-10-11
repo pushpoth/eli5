@@ -37,6 +37,8 @@ the small picture against it.
   that never moves, so the hit does not chase the drawing.
 - The slider is one number, `range`, at intensity 0, 0.5 and 1, that makes the
   answer weaker or stronger and moves one way only.
+- If the object has a control — a knob, a lever, a dial — the mechanism moves it,
+  so the interaction reads as caused, not scripted.
 
 ## The rest
 

@@ -56,11 +56,19 @@ Geometry carries identity. Names go to the read-out, outside the drawing.
 ## Detail
 A machine is built from many small, precise parts, and every part belongs to the
 mechanism and shows the features that make it what it is (`concepts.md`). Use the
-parts library (a knurl, a seam, a bolt ring) rather than bare blocks. A bare face
-or an empty corner is unfinished work, not calm — but detail is *earned*: the read
-gate, not the part count, decides when it is enough.
+parts library (a knurl, a seam, a bolt ring) rather than bare blocks. **Put the
+detail where the idea is:** if the figure is about one mechanism, keep the rest
+minimal — just enough to name the machine — and spend the parts on the subject,
+where the reader looks. A bare face or an empty corner is unfinished work, not
+calm — but detail is *earned*: the read gate, not the part count, decides.
+
+**Cause and effect.** A control the mechanism drives moves with it — a winding
+knob turns as the shutter opens, a lever swings with the part it holds — so the
+interaction reads as caused, not scripted.
 
 ## The frame
-The viewBox is 400 × 320; centre the figure near (200, 166) with `fit`. The
-camera is `cam(45, 0.5, S)`. The silhouette must read at 240px. `mount` keeps no
-state outside itself; `destroy` leaves the svg empty and nothing running.
+The viewBox is 400 × 320. **Centre the figure and let it fill about 75–85% of the
+card** with `frame` (a lone object should not sit small in the corner); the look
+warns below 40% coverage. The camera is `cam(45, 0.5, S)`. The silhouette must
+read at 240px. `mount` keeps no state outside itself; `destroy` leaves the svg
+empty and nothing running.

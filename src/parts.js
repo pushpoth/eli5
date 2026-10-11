@@ -8,10 +8,10 @@
 import { circ, rrect, run, ringAt, open, seg } from "./iso.js";
 
 /** Vertical knurl lines on the visible half of a cylinder: a knob or a thumb screw. */
-export function knurl(cx, cy, r, z0, z1, n, P, front, out = 0.15) {
+export function knurl(cx, cy, r, z0, z1, n, P, front, out = 0.15, phase = 0) {
   let d = "";
   for (let i = 0; i < n; i++) {
-    const a = (i / n) * 2 * Math.PI, ca = Math.cos(a), sa = Math.sin(a);
+    const a = phase + (i / n) * 2 * Math.PI, ca = Math.cos(a), sa = Math.sin(a);
     if (!front({ nu: ca, nv: sa })) continue;
     d += seg(P(cx + ca * (r + out), cy + sa * (r + out), z0), P(cx + ca * (r + out), cy + sa * (r + out), z1));
   }

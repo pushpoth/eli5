@@ -14,7 +14,7 @@ let boards = [];
 let raf = 0, last = 0;
 let io = null, rm = null;
 
-function frame(now) {
+function loopFrame(now) {
   const dt = Math.min(0.05, Math.max(0, (now - last) / 1000));
   last = now;
   let any = false;
@@ -22,10 +22,10 @@ function frame(now) {
     try { b.awake = !!b.tick(dt, now); } catch (err) { b.awake = false; setTimeout(() => { throw err; }); }
     any = any || b.awake;
   }
-  raf = any ? requestAnimationFrame(frame) : 0;
+  raf = any ? requestAnimationFrame(loopFrame) : 0;
 }
 
-function wake(b) { b.awake = true; if (!raf) { last = performance.now(); raf = requestAnimationFrame(frame); } }
+function wake(b) { b.awake = true; if (!raf) { last = performance.now(); raf = requestAnimationFrame(loopFrame); } }
 
 const onMotion = () => { setReducedMotion(!!rm?.matches); boards.forEach(wake); };
 

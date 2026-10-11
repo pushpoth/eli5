@@ -64,4 +64,7 @@ button. Query params for looking and hand-over: `?at=x,y`, `?intensity=`,
 | reaching for a colour, fill or shadow | move a stroke to `el-hi` (rule 04) |
 | a timer or its own frame loop | `EL.register`, with springs or tweens (rules 07, 08) |
 | creating a solid in one place and drawing it in another | create and draw in paint order (rule 06) |
+| a lone object small in the corner | `frame`, centred, about 75–85% of the card |
+| a knob or lever that never moves | drive it with the mechanism (cause and effect) |
+| detail spread evenly | spend it on the subject; keep the rest just enough to name the machine |
 | passing the audit and calling it done | answer `read.mjs` from the sheet; the audit cannot see a coin that should be a rock |

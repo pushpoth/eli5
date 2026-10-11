@@ -23,7 +23,7 @@ const OUT = here("../skills/eli5/kernel.js");
 const FILES = ["iso", "solid", "parts", "motion", "dom", "stage", "theme", "tour", "audit"];
 /* Exactly the names a figure may call. test/kernel.test.mjs holds this to EL's keys. */
 const PUBLIC = [
-  "cam", "proj", "unproj", "fit", "facing", "viewOf",
+  "cam", "proj", "unproj", "fit", "frame", "facing", "viewOf",
   "rrect", "circ", "circAt", "ringAt", "run", "hull",
   "poly", "open", "seg", "clamp", "lerp", "rad", "r2",
   "prism", "slab", "cylinder", "lathe",
