@@ -787,17 +787,20 @@ const ISO_CSS = `
 `;
 
 const P = {"origin":[350,247.78528767337465],"scale":1.2295600454131257,"azimuth":45,"elevation":30};
+const { sinA, cosA, sinE, cosE, k: K } = cameraOf(P);
+const ox = P.origin[0], oy = P.origin[1];
 const ROWS = [34,48,62], COLS = [-75,-45,-15,15,45,75];
 const stage = document.querySelector(".iso-stage");
 const svg = stage.querySelector("svg");
 const readout = document.querySelector("[data-readout]");
-const still = matchMedia("(prefers-reduced-motion: reduce)");
-let key = null, frame = 0, last = 0, visible = false;
 const keyAt = (wx, wy) => { let best = null, bd = 1e9; ROWS.forEach((y, r) => COLS.forEach((x, c) => { const d = Math.hypot(x - wx, y - wy); if (d < bd) { bd = d; best = { x, y, r, c }; } })); return best; };
-function tick() { if (readout && key) { const s = "key " + (key.r + 1) + "·" + (key.c + 1); if (readout.textContent !== s) readout.textContent = s; } frame = visible ? requestAnimationFrame(tick) : 0; }
-const run = () => { if (!frame && visible) { frame = requestAnimationFrame(tick); } };
-new IntersectionObserver((es) => { visible = es[es.length - 1].isIntersecting; if (visible) run(); }, { rootMargin: "120px 0px" }).observe(stage);
-if (still.matches) visible = false;
-stage.addEventListener("pointermove", (event) => { const b = svg.getBoundingClientRect(); const u = ((event.clientX - b.left) / b.width) * 700; const v = ((event.clientY - b.top) / b.height) * 440; const w = unproj(P, u, v, 16); key = keyAt(w[0], w[1]); run(); });
-stage.addEventListener("pointerleave", () => { key = null; });
+stage.addEventListener("pointermove", (event) => {
+  const b = svg.getBoundingClientRect();
+  const u = ((event.clientX - b.left) / b.width) * 700;
+  const v = ((event.clientY - b.top) / b.height) * 440;
+  const a = (u - ox) / K, bb = (v - oy) / K, c = (bb + 16 * cosE) / sinE;
+  const key = keyAt(a * sinA + c * cosA, -a * cosA + c * sinA);
+  if (readout && key) readout.textContent = "key " + (key.r + 1) + "·" + (key.c + 1);
+});
+stage.addEventListener("pointerleave", () => { if (readout) readout.textContent = "rest"; });
 </script></body></html>

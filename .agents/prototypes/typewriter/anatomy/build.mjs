@@ -131,20 +131,26 @@ const body = statics + R.items.map((it) => it.svg).join("");
 A.auditOrExit(R, P);
 
 const live = `
+window.TWRAN="start";
 const P = ${JSON.stringify(P)};
+const { sinA, cosA, sinE, cosE, k: K } = cameraOf(P);
+const ox = P.origin[0], oy = P.origin[1];
 const ROWS = ${JSON.stringify(KROW)}, COLS = ${JSON.stringify(KCOL)};
 const stage = document.querySelector(".iso-stage");
 const svg = stage.querySelector("svg");
 const readout = document.querySelector("[data-readout]");
-const still = matchMedia("(prefers-reduced-motion: reduce)");
-let key = null, frame = 0, last = 0, visible = false;
 const keyAt = (wx, wy) => { let best = null, bd = 1e9; ROWS.forEach((y, r) => COLS.forEach((x, c) => { const d = Math.hypot(x - wx, y - wy); if (d < bd) { bd = d; best = { x, y, r, c }; } })); return best; };
-function tick() { if (readout && key) { const s = "key " + (key.r + 1) + "·" + (key.c + 1); if (readout.textContent !== s) readout.textContent = s; } frame = visible ? requestAnimationFrame(tick) : 0; }
-const run = () => { if (!frame && visible) { frame = requestAnimationFrame(tick); } };
-new IntersectionObserver((es) => { visible = es[es.length - 1].isIntersecting; if (visible) run(); }, { rootMargin: "120px 0px" }).observe(stage);
-if (still.matches) visible = false;
-stage.addEventListener("pointermove", (event) => { const b = svg.getBoundingClientRect(); const u = ((event.clientX - b.left) / b.width) * ${WIDTH}; const v = ((event.clientY - b.top) / b.height) * ${HEIGHT}; const w = unproj(P, u, v, ${KEYZ}); key = keyAt(w[0], w[1]); run(); });
-stage.addEventListener("pointerleave", () => { key = null; });
+stage.addEventListener("pointermove", (event) => {
+  window.TWDBG = (window.TWDBG||0)+1;
+  const b = svg.getBoundingClientRect();
+  const u = ((event.clientX - b.left) / b.width) * ${WIDTH};
+  const v = ((event.clientY - b.top) / b.height) * ${HEIGHT};
+  const a = (u - ox) / K, bb = (v - oy) / K, c = (bb + ${KEYZ} * cosE) / sinE;
+  const key = keyAt(a * sinA + c * cosA, -a * cosA + c * sinA);
+  if (readout && key) readout.textContent = "key " + (key.r + 1) + "·" + (key.c + 1);
+});
+stage.addEventListener("pointerleave", () => { if (readout) readout.textContent = "rest"; });
+window.TWRAN="end";
 `;
 
 const bodyHtml = k.plateHtml({
@@ -162,5 +168,5 @@ const bodyHtml = k.plateHtml({
   body: `<div class="iso-stage" tabindex="0" role="application" aria-label="Typewriter: move the pointer across the keys">${k.figureSvg({ width: WIDTH, height: HEIGHT, label: "A typewriter seen in cutaway: a keyboard of keycaps below a type basket, and the platen roller and paper above, with the ribbon across them.", body })}</div>`,
 });
 
-writeFileSync(join(HERE, theme === "light" ? "typewriter-light.html" : "typewriter.html"), k.pageHtml({ title: "Typewriter", theme, body: bodyHtml, script: kitScript() + live }));
+writeFileSync(join(HERE, theme === "light" ? "typewriter-light.html" : "typewriter.html"), k.pageHtml({ title: "Typewriter", theme, body: bodyHtml, script: (kitScript() + live).replace(/<(\/?script)/gi, "\\x3c$1") }));
 console.log("wrote", theme === "light" ? "typewriter-light.html" : "typewriter.html");
